@@ -47,3 +47,8 @@ Cumulative Average Cycles: 10
 Total Randomly-Drawn Sample Lots: 3600
 Overall Cumulative Average: 10.225833333333334
 ````
+
+## Observations
+
+As Dr. Deming postulated, drawing of lots using random numbers does yield a cumulative average of 10 red beads. For comparison, pictured below is a capture of 360 hand-sampled lots using a 3-D printed paddle modeled after the same one Deming used in his demonstrations of the Red Bead Experiment. Note the variation:
+
