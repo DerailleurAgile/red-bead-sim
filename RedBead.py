@@ -1,7 +1,11 @@
-# A simulation of Dr. W.E. Deming's Red Bead Experiment using random number generation to draw samples.
-# I wrote this to test Deming's assertion that there is no rational basis for predicting the
-# cumulative average of Red Beads drawn in the _physical_ experiment using probability statistics,
-# ie. an expectation of 20% of the lot size (50), or 10.
+# A simulation of Dr. W.E. Deming's Red Bead Experiment using random number generation to draw sample lots.
+# by Christopher R Chapman Jan 2022
+#
+# I've written this simulation to test Dr. Deming's assertion that if the Red Bead Experiment were run
+# using samples drawn using random numbers instead of mechanical sampling, the cumulative average of red 
+# beads drawn over time would mirror the distribution of red to white beads (20%) according to the lot size 
+# of the paddle used to draw samples (20% of 50, or 10)
+#(See: Out of the Crisis, pp. 351-353)
 
 import random as rnd 
 
@@ -24,7 +28,7 @@ RED_BEAD_EXPERIMENT_LOTS = 24
 
 def main():
 
-    # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
+    # Deming contends that the only way to have truly random samples drawn from
     # the bucket is to number all the beads and select them at random using a corresponding table of
     # random numbers. This method orders the beads in a virtual bucket with 0-3199 being white (0), and 
     # 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups.
