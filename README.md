@@ -50,6 +50,13 @@ Overall Cumulative Average: 10.225833333333334
 
 ## Observations
 
-As Dr. Deming postulated, drawing of lots using random numbers does yield a cumulative average of 10 red beads. For comparison, pictured below is a capture of 360 hand-sampled lots using a 3-D printed paddle modeled after the same one Deming used in his demonstrations of the Red Bead Experiment. Note the variation:
+As Dr. Deming postulated, drawing of lots using random numbers does yield a cumulative average of 10 red beads. For comparison, pictured below is a capture of 360 hand-sampled lots using a [3-D printed paddle](https://www.thingiverse.com/thing:3991096) modeled after the same one Deming used in his demonstrations of the Red Bead Experiment. Note the cumulative average of 9.69
 
 ![Red Bead - Manual Samples](/images/redbead_manual_cumulative_average.png)
+
+## Discussion
+
+Why is the cumulative average for the manually-drawn samples not aligning with those of the simulation? As Deming himself suggested, there is more to the exercise than randomly drawing beads: It is a system and systems exhibit _variation_ through the interaction of their parts. In the case of the experiement, the paddle's interaction with the beads in the bucket, and the beads between themselves don't guarantee a uniform distribution for sampling. What's drawn with each sample depends on where the paddle is inserted, and how it is moved to ensure beads fall into each indentation. The beads themselves are _imperfect_ with some having burrs on them that were not removed after molding, or were not formed correctly - all of which can and do affect the samples that are drawn.
+
+![Red Bead - Bead Imperfections](/images/redbead_sample_beads_imperfections.png)
+
