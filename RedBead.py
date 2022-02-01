@@ -6,8 +6,12 @@
 # beads drawn over time would mirror the distribution of red to white beads (20%) according to the lot size 
 # of the paddle used to draw samples (20% of 50, or 10)
 #(See: Out of the Crisis, pp. 351-353)
+#
+# Arguments:
+# RedBead.py [# of Cumulative Avg Cycles to Run def: 1] [Experiment Cycles to Run def: 10]
 
-import random as rnd 
+import random as rnd
+from sys import argv
 
 # Deming used two different configurations of the experiment: 3000 White to 750 Red, as described in Out of the Crisis,
 # and 3200 White to 800 Red, as described in The New Economics - both work out to an 80/20 mix.
@@ -28,24 +32,27 @@ RED_BEAD_EXPERIMENT_LOTS = 24
 
 def main():
 
-    # Deming contends that the only way to have truly random samples drawn from
-    # the bucket is to number all the beads and select them at random using a corresponding table of
-    # random numbers. This method orders the beads in a virtual bucket with 0-3199 being white (0), and 
-    # 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups.
-    populate_beads_ordered(BEAD_BUCKET_ARRAY)
-
-    # For an experiment, try using this method that randomly distributes the red beads in the bucket array
-    #populate_beads_mixed(BEAD_BUCKET_ARRAY)
-
     log = []
     cum_avg_log = []
     total_red_beads = 0
     cum_avg_total = 0
-    experiment_cycles = 15
+    cum_avg_cycles = 1
+    experiment_cycles = 10
     sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
+    
+    # How many cycles do we want to run?
+    if len(argv) == 2:
+        cum_avg_cycles = int(argv[1])
+    if len(argv) == 3:
+        experiment_cycles = int(argv[2])
+        sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
 
-    # How many cumulative averages we want to gather by iterating over the experiment loop.
-    cum_avg_cycles = 10
+    # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
+    # the bucket is to number all the beads and select them at random using a corresponding table of
+    # random numbers. This method orders the beads in a virtual bucket with 0-3199 being white (0), and 
+    # 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups.
+    populate_beads_ordered(BEAD_BUCKET_ARRAY)
+     #populate_beads_mixed(BEAD_BUCKET_ARRAY)
 
     for x in range(0,cum_avg_cycles):
         for r in range(0,sample_count):
@@ -59,17 +66,19 @@ def main():
             log.append(red_beads_pulled)
             total_red_beads = total_red_beads + red_beads_pulled
         
-        cum_avg_log.append(total_red_beads/sample_count)
-        print(total_red_beads/sample_count)    
+        print(log)
+        cum_avg_log.append(round((total_red_beads/sample_count),2))
+        #print(round((total_red_beads/sample_count),2))   
         cum_avg_total = cum_avg_total + (total_red_beads / sample_count)
         total_red_beads = 0
         log = []
     
-    print("\nRed Bead Experiment Cycles: " + str(experiment_cycles))
+    print(cum_avg_log)
+    print("\nCumulative Average Cycles: " + str(cum_avg_cycles))
+    print("Red Bead Experiment Cycles: " + str(experiment_cycles))
     print("Samples Withdrawn per Experiment Cycle: " + str(RED_BEAD_EXPERIMENT_LOTS))
-    print("Cumulative Average Cycles: " + str(cum_avg_cycles))
     print("Total Randomly-Drawn Sample Lots: " + str(sample_count*cum_avg_cycles))
-    print("Overall Cumulative Average: " + str(cum_avg_total / (cum_avg_cycles)) + "\n\n")
+    print("Overall Cumulative Average: " + str(round(cum_avg_total / (cum_avg_cycles),2)) + "\n\n")
 
     
 def pull_sample_from_bucket(bucket_array,paddle_size):
