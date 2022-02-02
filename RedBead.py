@@ -45,6 +45,7 @@ def main():
         cum_avg_cycles = int(argv[1])
     if len(argv) == 3:
         experiment_cycles = int(argv[2])
+        cum_avg_cycles = int(argv[1])
         sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
 
     # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
@@ -66,18 +67,19 @@ def main():
             log.append(red_beads_pulled)
             total_red_beads = total_red_beads + red_beads_pulled
         
-        print(log)
+        #print(log)
         cum_avg_log.append(round((total_red_beads/sample_count),2))
         #print(round((total_red_beads/sample_count),2))   
         cum_avg_total = cum_avg_total + (total_red_beads / sample_count)
         total_red_beads = 0
         log = []
     
+    print("\n")
     print(cum_avg_log)
     print("\nCumulative Average Cycles: " + str(cum_avg_cycles))
     print("Red Bead Experiment Cycles: " + str(experiment_cycles))
     print("Samples Withdrawn per Experiment Cycle: " + str(RED_BEAD_EXPERIMENT_LOTS))
-    print("Total Randomly-Drawn Sample Lots: " + str(sample_count*cum_avg_cycles))
+    print("Total Randomly-Drawn Sample Lots: " + str(sample_count * cum_avg_cycles))
     print("Overall Cumulative Average: " + str(round(cum_avg_total / (cum_avg_cycles),2)) + "\n\n")
 
     
