@@ -11,6 +11,7 @@
 # RedBead.py [# of Cumulative Avg Cycles to Run def: 1] [Experiment Cycles to Run def: 10]
 
 import random as rnd
+import argparse
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
@@ -45,11 +46,13 @@ PADDLE_LOT_SIZE = 50
 # to carry on with double-shifts. We dispense with the rating and ranking part of the exercise.
 RED_BEAD_EXPERIMENT_LOTS = 24
 
+ARGPARSER = argparse.ArgumentParser(description='ReadBeadSim argument parser')
+
 # How many samples to include in the calculation of the average and mR-BAR
 # for setting the process limits. To default to the entire array, set at -1.
 # To run an interesting experiment, calculate the mean and limits using the
 # RED_BEAD_EXPERIMENT_LOTS*2 to see how well they predict the range of variation.
-MEAN_SAMPLE_COUNT = RED_BEAD_EXPERIMENT_LOTS * 2
+MEAN_SAMPLE_COUNT = -1
 
 def main():
 
@@ -61,18 +64,24 @@ def main():
     experiment_cycles = 4
     sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
     
-    # How many cycles do we want to run?
-    if len(argv) == 2:
-        cum_avg_cycles = int(argv[1])
-    if len(argv) == 3:
-        experiment_cycles = int(argv[2])
-        cum_avg_cycles = int(argv[1])
-        sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
+    ARGPARSER.add_argument('--experimentCycles', type=int, default=10, required=False, help='How many experiments should we run (default:4) ?')
+    ARGPARSER.add_argument('--cumulativeAvgCycles', type=int, default=1, required=False, help='How many cycles to calculate the cumulative average against (default:1) ?')
+    ARGPARSER.add_argument('--customSampleMethod', action="store_true", required=False, help='Use custom sampling method to select beads (default:True).')
+    ARGPARSER.add_argument('--meanSampleCount', type=int, default=RED_BEAD_EXPERIMENT_LOTS*2, required=False, help='How many data points to include for calculating limits.')
+
+    args = ARGPARSER.parse_args()
+    cum_avg_cycles = args.cumulativeAvgCycles
+    experiment_cycles = args.experimentCycles
+    customSampleMethod = args.customSampleMethod
+    sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
+    global MEAN_SAMPLE_COUNT
+    MEAN_SAMPLE_COUNT = args.meanSampleCount
 
     # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
     # the bucket is to number all the beads and select them at random using a corresponding table of
     # random numbers. This method orders the beads in a virtual bucket with 0-3199 being white (0), and 
-    # 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups.
+    # 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups after randomly
+    # shuffling the array.
     #populate_beads_ordered(BEAD_BUCKET_ARRAY)
     populate_beads_mixed(BEAD_BUCKET_ARRAY)
     shuffle(BEAD_BUCKET_ARRAY)
@@ -80,11 +89,13 @@ def main():
     for x in range(0,cum_avg_cycles):
         for r in range(0,sample_count):
             
-            # I've observed that on-balance, my function for randomly sampling an array results in cumulative
+            # I've observed that on-balance, my custom method for randomly sampling an array results in cumulative
             # averages of '10.xx', while Random.Sample() results in cumulative averages of '9.9xx'.
-            # Try each method below and see what results you get. 
-            #red_beads_pulled = pull_sample_from_bucket(BEAD_BUCKET_ARRAY, PADDLE_LOT_SIZE).count(RED_BEAD) 
-            red_beads_pulled = rnd.sample(BEAD_BUCKET_ARRAY, PADDLE_LOT_SIZE).count(RED_BEAD)
+            if customSampleMethod == True:
+                red_beads_pulled = pull_sample_from_bucket(BEAD_BUCKET_ARRAY, PADDLE_LOT_SIZE).count(RED_BEAD)
+            else:
+                red_beads_pulled = rnd.sample(BEAD_BUCKET_ARRAY, PADDLE_LOT_SIZE).count(RED_BEAD)
+            
             log.append(red_beads_pulled)
             total_red_beads = total_red_beads + red_beads_pulled
 
@@ -152,6 +163,28 @@ def get_mr_bar(redbead_array):
 
     return round(mR_BAR,0)
 
+# Calculate the mean and return as an array of repeating values for 
+# plotting as the control line in the Process Behaviour Chart.
+def get_mean_array(redbead_array):
+
+    mean_array = []
+    mean =0
+    sample_count = 0
+
+    if MEAN_SAMPLE_COUNT == -1:
+        sample_count = len(redbead_array)
+    else:
+        sample_count = MEAN_SAMPLE_COUNT
+    
+    # Calculate the mean using either the entire array (default)
+    # or the first 'x' elements
+    mean = np.mean(redbead_array[:sample_count])
+
+    for x in range(len(redbead_array)):
+        mean_array.append(round(mean,1))
+    
+    return mean_array
+
 # Calculate the moving ranges and return them as an array of n-1 deltas
 def get_moving_range_array(redbead_array):
     movingRangeArray = []
@@ -180,31 +213,14 @@ def get_moving_range_limits_array(movingRangeArray):
 
     return movingRangeLimitsArray
 
-# Calculate the mean and return as an array of repeating values for 
-# plotting as the control line in the Process Behaviour Chart.
-def get_mean_array(redbead_array):
-
-    mean_array = []
-    mean =0
-    sample_count = 0
-
-    if MEAN_SAMPLE_COUNT == -1:
-        sample_count = len(redbead_array)
-    else:
-        sample_count = MEAN_SAMPLE_COUNT
-    
-    mean = np.mean(redbead_array[:sample_count])
-
-    for x in range(len(redbead_array)):
-        mean_array.append(round(mean,1))
-    
-    return mean_array
-
 # Render the Process Behaviour Chart using arrays for data points, mean, upper process limits, 
 # and lower process limits
 def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
 
     fig = go.Figure()
+    args = ARGPARSER.parse_args()
+    # Number of points to highlight
+    highlight_points = args.meanSampleCount
 
     fig.add_trace(
         go.Scatter(
@@ -230,9 +246,28 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
         )
     )
 
+    # Add a transparent rectangle to highlight the first 'highlight_points' data points
+    fig.add_shape(
+        type="rect",
+        x0=0, y0=min(min(redbead_array), min(mean_array), min(upl_array), min(lpl_array)),
+        x1=highlight_points - 1, y1=max(max(redbead_array), max(mean_array), max(upl_array), max(lpl_array)),
+        fillcolor="LightSkyBlue", opacity=0.3, line_width=0
+    )
+
+    fig.add_annotation(
+        x=highlight_points / 2,  # Positioning the text in the middle of the rectangle
+        y=max(max(redbead_array), max(mean_array), max(upl_array), max(lpl_array)),
+        text="<b>Baseline Period</b>",
+        showarrow=False,
+        font=dict(size=14, color="black"),
+        align="center",
+        xanchor="center",
+        yanchor="bottom"
+    )
+
     #layout = go.Layout(title='Red Bead Experiment Simulation')
     chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
-        "<span style='font-size:14px'><b>Experiments: </b>" + str(argv[2]) + " " + "<b>Data Points:</b> " + \
+        "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
         str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Mean Sample Count: </b>" + str(MEAN_SAMPLE_COUNT) + \
         "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
         "<b>UPL:</b> " +str(upl_array[0]) + "  " + \
@@ -243,7 +278,6 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
     )
     
     fig.show()
-
 
 # Plots the moving range
 # Returns the figure object of the chart
@@ -264,7 +298,6 @@ def plot_moving_range(moving_range_array,moving_range_limits_array):
     )
 
     return fig
-
 
 def plot_test():
     df = pd.DataFrame(dict(
