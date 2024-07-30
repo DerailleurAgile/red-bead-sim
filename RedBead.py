@@ -67,7 +67,7 @@ def main():
     ARGPARSER.add_argument('--experimentCycles', type=int, default=10, required=False, help='How many experiments should we run (default:4) ?')
     ARGPARSER.add_argument('--cumulativeAvgCycles', type=int, default=1, required=False, help='How many cycles to calculate the cumulative average against (default:1) ?')
     ARGPARSER.add_argument('--customSampleMethod', action="store_true", required=False, help='Use custom sampling method to select beads (default:True).')
-    ARGPARSER.add_argument('--meanSampleCount', type=int, default=RED_BEAD_EXPERIMENT_LOTS*2, required=False, help='How many data points to include for calculating limits.')
+    ARGPARSER.add_argument('--baselineSampleCount', type=int, default=RED_BEAD_EXPERIMENT_LOTS*2, required=False, help='How many data points to include for calculating limits.')
 
     args = ARGPARSER.parse_args()
     cum_avg_cycles = args.cumulativeAvgCycles
@@ -75,7 +75,7 @@ def main():
     customSampleMethod = args.customSampleMethod
     sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
     global MEAN_SAMPLE_COUNT
-    MEAN_SAMPLE_COUNT = args.meanSampleCount
+    MEAN_SAMPLE_COUNT = args.baselineSampleCount
 
     # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
     # the bucket is to number all the beads and select them at random using a corresponding table of
@@ -220,7 +220,7 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
     fig = go.Figure()
     args = ARGPARSER.parse_args()
     # Number of points to highlight
-    highlight_points = args.meanSampleCount
+    highlight_points = args.baselineSampleCount
 
     fig.add_trace(
         go.Scatter(
@@ -268,7 +268,7 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
     #layout = go.Layout(title='Red Bead Experiment Simulation')
     chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
         "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
-        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Mean Sample Count: </b>" + str(MEAN_SAMPLE_COUNT) + \
+        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(MEAN_SAMPLE_COUNT) + \
         "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
         "<b>UPL:</b> " +str(upl_array[0]) + "  " + \
         "<b>LPL:</b> " +str(lpl_array[0]) + "</span>"
