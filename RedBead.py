@@ -24,10 +24,16 @@ from random import shuffle
 RED_BEADS_IN_BUCKET = 800
 WHITE_BEADS_IN_BUCKET = 3200
 BEAD_BUCKET_ARRAY = [0] * (RED_BEADS_IN_BUCKET + WHITE_BEADS_IN_BUCKET)
+
+# Define simple flags to identify the type of bead in the bucket or paddle
 RED_BEAD = 1
 WHITE_BEAD = 0
+
+# Define simple flags for determining whether to calculate 3σ units above or below the mean
 UPPER_PROC_LIMIT = 1
 LOWER_PROC_LIMIT = 0
+
+# Define label text to identify the default sampling method used to populate the paddle
 SAMPLE_METHOD = "Random.Sample()"
 
 # Why 50? This goes back to the original design of the experiment that used a paddle with
@@ -38,6 +44,12 @@ PADDLE_LOT_SIZE = 50
 # one sample each. Half are fired for poor performance at the end of the third day, leaving the remainder
 # to carry on with double-shifts. We dispense with the rating and ranking part of the exercise.
 RED_BEAD_EXPERIMENT_LOTS = 24
+
+# How many samples to include in the calculation of the average and mR-BAR
+# for setting the process limits. To default to the entire array, set at -1.
+# To run an interesting experiment, calculate the mean and limits using the
+# RED_BEAD_EXPERIMENT_LOTS*2 to see how well they predict the range of variation.
+MEAN_SAMPLE_COUNT = RED_BEAD_EXPERIMENT_LOTS * 2
 
 def main():
 
@@ -91,15 +103,14 @@ def main():
     print("Red Bead Experiment Cycles: " + str(experiment_cycles))
     print("Samples Withdrawn per Experiment Cycle: " + str(RED_BEAD_EXPERIMENT_LOTS))
     print("Total Randomly-Drawn Sample Lots: " + str(sample_count * cum_avg_cycles))
-    print("\nCumulative Averages per Experiment Cycle")
-    print(cum_avg_log)
-    print("Overall Cumulative Average: " + str(round(cum_avg_total / (cum_avg_cycles),2)) + "\n\n")
+    print("\nCumulative Averages per Experiment Cycle: " + str(cum_avg_log))
+    print("\nOverall Cumulative Average: " + str(round(cum_avg_total / (cum_avg_cycles),2)) + "\n\n")
     
     mean_array = get_mean_array(log)
     upl_array = get_limits_array(UPPER_PROC_LIMIT,log)
     lpl_array = get_limits_array(LOWER_PROC_LIMIT,log)
-    moving_range_array = get_moving_range_array(log)
-    moving_range_limits_array = get_moving_range_limits_array(moving_range_array)
+    #moving_range_array = get_moving_range_array(log)
+    #moving_range_limits_array = get_moving_range_limits_array(moving_range_array)
 
     plot_red_beads(log,mean_array,upl_array,lpl_array)
     #plot_moving_range(get_moving_range_array(log), moving_range_limits_array)
@@ -125,28 +136,23 @@ def get_limits_array(limit_type, redbead_array):
     return proc_limit_array
  
 # Calculate the average moving range (mR-bar) of a set of values in an array
+# and return as an integer
 def get_mr_bar(redbead_array):
     movingRange_array = []
     mR_BAR = 0
-
+    sample_count = 0
     movingRange_array = get_moving_range_array(redbead_array)
 
-    # Run the moving ranges
-    #for x in range(len(movingRange_array)-1):
-    #    mR_BAR = mR_BAR + movingRange_array[x]
-    #mR_BAR = mR_BAR / len(redbead_array)
+    if MEAN_SAMPLE_COUNT == -1:
+        sample_count = len(movingRange_array) -1
+    else:
+        sample_count = MEAN_SAMPLE_COUNT -1
 
-    # Run the moving ranges for the first 49 draws
-    # It will always be one less than moving range because it is
-    # in tuples
-    for x in range(49):
-        mR_BAR = mR_BAR + movingRange_array[x]
-    mR_BAR = mR_BAR / 49
+    mR_BAR = np.mean(movingRange_array[:sample_count])
 
     return round(mR_BAR,0)
 
-# Given an array of 50 red and white beads in a paddle, calculate the moving ranges
-# and return them as an array of n-1 deltas
+# Calculate the moving ranges and return them as an array of n-1 deltas
 def get_moving_range_array(redbead_array):
     movingRangeArray = []
     for x in range(len(redbead_array)-1):
@@ -174,24 +180,20 @@ def get_moving_range_limits_array(movingRangeArray):
 
     return movingRangeLimitsArray
 
-# Given an array of 50 red and white beads in a paddle, calculate
-# the mean and return as an array of repeating values for 
-# plotting in a chart.
+# Calculate the mean and return as an array of repeating values for 
+# plotting as the control line in the Process Behaviour Chart.
 def get_mean_array(redbead_array):
 
     mean_array = []
     mean =0
+    sample_count = 0
 
-    # Run the mean for the entire array
-    #for x in range(len(redbead_array)):
-    #    mean = mean + redbead_array[x]
-    #mean = mean / len(redbead_array)
-
-    # Run the mean for first 50 draws only; 
-    for x in range(50):
-        mean = mean + redbead_array[x]
-    mean = mean / 50
+    if MEAN_SAMPLE_COUNT == -1:
+        sample_count = len(redbead_array)
+    else:
+        sample_count = MEAN_SAMPLE_COUNT
     
+    mean = np.mean(redbead_array[:sample_count])
 
     for x in range(len(redbead_array)):
         mean_array.append(round(mean,1))
@@ -231,8 +233,8 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
     #layout = go.Layout(title='Red Bead Experiment Simulation')
     chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
         "<span style='font-size:14px'><b>Experiments: </b>" + str(argv[2]) + " " + "<b>Data Points:</b> " + \
-        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + "<br>" + \
-        "<b>Mean:</b> " + str(mean_array[0]) + "  " + \
+        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Mean Sample Count: </b>" + str(MEAN_SAMPLE_COUNT) + \
+        "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
         "<b>UPL:</b> " +str(upl_array[0]) + "  " + \
         "<b>LPL:</b> " +str(lpl_array[0]) + "</span>"
 
