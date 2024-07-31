@@ -19,6 +19,7 @@ import numpy as np
 from sys import argv
 from random import choice
 from random import shuffle
+from plotly.subplots import make_subplots
 
 # Deming used two different configurations of the experiment: 3000 White to 750 Red, as described in Out of the Crisis,
 # and 3200 White to 800 Red, as described in The New Economics - both work out to an 80/20 mix.
@@ -131,7 +132,12 @@ def plot_results(log,args):
     mean_array = get_mean_array(log)
     upl_array = get_limits_array(UPPER_PROC_LIMIT, log)
     lpl_array = get_limits_array(LOWER_PROC_LIMIT, log)
-    plot_red_beads(log, mean_array, upl_array, lpl_array, args)
+    
+    mR_array = get_moving_range_array(log)
+    npl_array = get_moving_range_limits_array(mR_array)
+    #fig1 = plot_red_beads(log, mean_array, upl_array, lpl_array, args)
+    fig1 = plot_xmr_chart(log, mean_array, upl_array, lpl_array, mR_array, npl_array, args)
+    fig1.show()
 
 # Return an array containing the upper and lower process limits as repeating
 # values for plotting on a chart
@@ -247,25 +253,122 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array, args):
         title=dict(text=chart_title, x=0.5)
     )
     
-    fig.show()
+    #fig.show()
+    return fig
 
-# Plots the moving range
-# Returns the figure object of the chart
-def plot_moving_range(moving_range_array,moving_range_limits_array):
+def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range_array, npl_array, args):
 
-    fig = go.Figure()
-    moving_range_array.insert(0,None)
+    fig = make_subplots(
+        rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1,
+        row_heights=[0.8, 0.2]
+    )
+
+     # Number of points to highlight
+    highlight_points = args.baselineSampleCount
+
+    # Add the red bead plot to the first subplot
     fig.add_trace(
         go.Scatter(
-            y=moving_range_array, name='Moving Range (mR)', line=dict(color='royalblue', width=2), mode='lines+markers'
-        )
+            x=list(range(len(redbead_array))),
+            y=redbead_array,
+            name='Red Beads',
+            line=dict(color='royalblue', width=2),
+            mode='lines+markers'
+        ),
+        row=1, col=1
     )
 
     fig.add_trace(
         go.Scatter(
-            y=moving_range_limits_array, name='UPL', line=dict(color='red', width=2)
-        )
+            x=list(range(len(mean_array))),
+            y=mean_array,
+            name='Mean',
+            line=dict(color='green', width=2)
+        ),
+        row=1, col=1
     )
+
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(len(upl_array))),
+            y=upl_array,
+            name='UPL',
+            line=dict(color='red', width=2)
+        ),
+        row=1, col=1
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(len(lpl_array))),
+            y=lpl_array,
+            name='LPL',
+            line=dict(color='red', width=2)
+        ),
+        row=1, col=1
+    )
+
+    # Add a transparent rectangle to highlight the first 'highlight_points' data points
+    fig.add_shape(
+        type="rect",
+        x0=0, y0=min(min(upl_array), min(lpl_array)),
+        x1=highlight_points - 1, y1=max(max(upl_array), max(lpl_array)),
+        fillcolor="LightSkyBlue", opacity=0.3, line_width=0,
+        row=1, col=1
+    )
+
+    fig.add_annotation(
+        x=highlight_points / 2,  # Positioning the text in the middle of the rectangle
+        y=max(upl_array),
+        text="<b>Baseline Period</b>",
+        showarrow=False,
+        font=dict(size=14, color="black"),
+        align="center",
+        xanchor="center",
+        yanchor="top",
+        opacity=0.7,
+        row=1, col=1
+    )
+
+    # Add the moving range plot to the second subplot with an offset of one
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(1, len(moving_range_array) + 1)),
+            y=moving_range_array,
+            name='Moving Range',
+            line=dict(color='royalblue', width=2),
+            mode='lines+markers'
+        ),
+        row=2, col=1
+    )
+
+    # Add the upper process limit for the moving range -- I call it NPL or "natural process limit"
+    # to distinguish it from the other limits.
+    fig.add_trace(
+        go.Scatter(
+            x=list(range(len(npl_array))),
+            y=npl_array,
+            name='NPL',
+            line=dict(color='red', width=2)
+        ),
+        row=2, col=1
+    )
+
+    # Update layout
+    chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
+        "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
+        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(args.baselineSampleCount) + \
+        "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
+        "<b>UPL:</b> " + str(upl_array[0]) + "  " + \
+        "<b>LPL:</b> " + str(lpl_array[0]) + "</span>"
+
+    fig.update_layout(
+        title=dict(text=chart_title, x=0.5)
+    )
+
+    fig.update_xaxes(title_text="Sample", row=2, col=1)
+    fig.update_yaxes(title_text="Red Beads", row=1, col=1)
+    fig.update_yaxes(title_text="Moving Range", row=2, col=1)
 
     return fig
 
@@ -299,6 +402,26 @@ def populate_beads_random(bucket_array):
 def populate_beads_ordered(bucket_array):
     for bead in range(len(bucket_array)):
         bucket_array[bead] = WHITE_BEAD if bead < WHITE_BEADS_IN_BUCKET else RED_BEAD
+
+# Plots the moving range
+# Returns the figure object of the chart
+def plot_moving_range(moving_range_array,moving_range_limits_array):
+
+    fig = go.Figure()
+    moving_range_array.insert(0,None)
+    fig.add_trace(
+        go.Scatter(
+            y=moving_range_array, name='Moving Range (mR)', line=dict(color='royalblue', width=2), mode='lines+markers'
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            y=moving_range_limits_array, name='UPL', line=dict(color='red', width=2)
+        )
+    )
+
+    return fig
 
 if __name__ == "__main__":
     main()
