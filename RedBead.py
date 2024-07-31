@@ -262,7 +262,7 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
         font=dict(size=14, color="black"),
         align="center",
         xanchor="center",
-        yanchor="bottom"
+        yanchor="top"
     )
 
     #layout = go.Layout(title='Red Bead Experiment Simulation')
