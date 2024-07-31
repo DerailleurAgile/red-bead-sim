@@ -249,14 +249,14 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
     # Add a transparent rectangle to highlight the first 'highlight_points' data points
     fig.add_shape(
         type="rect",
-        x0=0, y0=min(min(redbead_array), min(mean_array), min(upl_array), min(lpl_array)),
-        x1=highlight_points - 1, y1=max(max(redbead_array), max(mean_array), max(upl_array), max(lpl_array)),
+        x0=0, y0=min(min(upl_array), min(lpl_array)),
+        x1=highlight_points - 1, y1=max(max(upl_array), max(lpl_array)),
         fillcolor="LightSkyBlue", opacity=0.3, line_width=0
     )
 
     fig.add_annotation(
         x=highlight_points / 2,  # Positioning the text in the middle of the rectangle
-        y=max(max(redbead_array), max(mean_array), max(upl_array), max(lpl_array)),
+        y=max(upl_array),
         text="<b>Baseline Period</b>",
         showarrow=False,
         font=dict(size=14, color="black"),
