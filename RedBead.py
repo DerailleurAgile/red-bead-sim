@@ -8,15 +8,17 @@
 #(See: Out of the Crisis, pp. 351-353)
 #
 # Arguments:
-# RedBead.py [# of Cumulative Avg Cycles to Run def: 1] [Experiment Cycles to Run def: 10]
+# --experimentCycles: How many Red Bead Experiments to run; defaults to 10
+# --cumulativeAvgCycles: How many master cycles to run experiments within; defaults to 1
+# --customSampleMethod: Flag to use my own method to draw samples; defaults to Random.Sample()
+# --baselineSamplePeriod: How many samples to calculate avg and limits against; defaults to ALL (-1)
+
 
 import random as rnd
 import argparse
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
 import numpy as np
-from sys import argv
 from random import choice
 from random import shuffle
 from plotly.subplots import make_subplots
