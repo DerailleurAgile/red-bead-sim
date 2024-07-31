@@ -22,8 +22,8 @@ from random import shuffle
 
 # Deming used two different configurations of the experiment: 3000 White to 750 Red, as described in Out of the Crisis,
 # and 3200 White to 800 Red, as described in The New Economics - both work out to an 80/20 mix.
-RED_BEADS_IN_BUCKET = 800
-WHITE_BEADS_IN_BUCKET = 3200
+RED_BEADS_IN_BUCKET = 750
+WHITE_BEADS_IN_BUCKET = 3000
 BEAD_BUCKET_ARRAY = [0] * (RED_BEADS_IN_BUCKET + WHITE_BEADS_IN_BUCKET)
 
 # Define simple flags to identify the type of bead in the bucket or paddle
@@ -52,7 +52,7 @@ ARGPARSER = argparse.ArgumentParser(description='ReadBeadSim argument parser')
 # for setting the process limits. To default to the entire array, set at -1.
 # To run an interesting experiment, calculate the mean and limits using the
 # RED_BEAD_EXPERIMENT_LOTS*2 to see how well they predict the range of variation.
-MEAN_SAMPLE_COUNT = -1
+BASELINE_SAMPLE_COUNT = -1
 
 def main():
 
@@ -63,8 +63,8 @@ def main():
     total_red_beads = 0
     cum_avg_total = 0 
     sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
-    global MEAN_SAMPLE_COUNT
-    MEAN_SAMPLE_COUNT = args.baselineSampleCount
+    global BASELINE_SAMPLE_COUNT
+    BASELINE_SAMPLE_COUNT = args.baselineSampleCount
 
     initialize_bead_bucket(BEAD_BUCKET_ARRAY)
     for _ in range(0,args.cumulativeAvgCycles):
@@ -118,7 +118,8 @@ def run_experiment_cycle(bead_bucket, sample_count, customSampleMethod):
 # For confirming results...
 def print_results(args, cum_avg_log, cum_avg_total, sample_count):
     print("\n")
-    print(f"\nCumulative Average Cycles: {args.cumulativeAvgCycles}")
+    print(f"Total Beads: {len(BEAD_BUCKET_ARRAY)}")
+    print(f"Cumulative Average Cycles: {args.cumulativeAvgCycles}")
     print(f"Red Bead Experiment Cycles: {args.experimentCycles}")
     print(f"Samples Withdrawn per Experiment Cycle: {RED_BEAD_EXPERIMENT_LOTS}")
     print(f"Total Randomly-Drawn Sample Lots: {sample_count * args.cumulativeAvgCycles}")
@@ -149,24 +150,16 @@ def get_limits_array(limit_type, redbead_array):
 # Calculate the average moving range (mR-bar) of a set of values in an array
 # and return as an integer
 def get_mr_bar(redbead_array):
-    movingRange_array = []
-    mR_BAR = 0
-    sample_count = 0
-    movingRange_array = get_moving_range_array(redbead_array)
+    moving_range_array = get_moving_range_array(redbead_array)
+    sample_count = len(moving_range_array) if BASELINE_SAMPLE_COUNT == -1 else BASELINE_SAMPLE_COUNT - 1
+    mR_BAR = np.mean(moving_range_array[:sample_count])
 
-    if MEAN_SAMPLE_COUNT == -1:
-        sample_count = len(movingRange_array) -1
-    else:
-        sample_count = MEAN_SAMPLE_COUNT -1
-
-    mR_BAR = np.mean(movingRange_array[:sample_count])
-
-    return round(mR_BAR,0)
+    return round(mR_BAR, 0)
 
 # Returns an array of repeating values representing the mean of a given array.
 # We need to do this to draw the mean and process limits on the chart.
 def get_mean_array(redbead_array):
-    sample_count = len(redbead_array) if MEAN_SAMPLE_COUNT == -1 else MEAN_SAMPLE_COUNT
+    sample_count = len(redbead_array) if BASELINE_SAMPLE_COUNT == -1 else BASELINE_SAMPLE_COUNT
     mean = round(np.mean(redbead_array[:sample_count]), 1)
     return [mean] * len(redbead_array)
 
@@ -245,7 +238,7 @@ def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array, args):
     #layout = go.Layout(title='Red Bead Experiment Simulation')
     chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
         "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
-        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(MEAN_SAMPLE_COUNT) + \
+        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(args.baselineSampleCount) + \
         "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
         "<b>UPL:</b> " +str(upl_array[0]) + "  " + \
         "<b>LPL:</b> " +str(lpl_array[0]) + "</span>"
