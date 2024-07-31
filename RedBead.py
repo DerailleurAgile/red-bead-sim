@@ -56,81 +56,85 @@ MEAN_SAMPLE_COUNT = -1
 
 def main():
 
+    args = parse_arguments()
+
     log = []
     cum_avg_log = []
     total_red_beads = 0
-    cum_avg_total = 0
-    cum_avg_cycles = 1
-    experiment_cycles = 4
-    sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
-    
-    ARGPARSER.add_argument('--experimentCycles', type=int, default=10, required=False, help='How many experiments should we run (default:4) ?')
-    ARGPARSER.add_argument('--cumulativeAvgCycles', type=int, default=1, required=False, help='How many cycles to calculate the cumulative average against (default:1) ?')
-    ARGPARSER.add_argument('--customSampleMethod', action="store_true", required=False, help='Use custom sampling method to select beads (default:True).')
-    ARGPARSER.add_argument('--baselineSampleCount', type=int, default=RED_BEAD_EXPERIMENT_LOTS*2, required=False, help='How many data points to include for calculating limits.')
-
-    args = ARGPARSER.parse_args()
-    cum_avg_cycles = args.cumulativeAvgCycles
-    experiment_cycles = args.experimentCycles
-    customSampleMethod = args.customSampleMethod
-    sample_count = experiment_cycles * RED_BEAD_EXPERIMENT_LOTS
+    cum_avg_total = 0 
+    sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
     global MEAN_SAMPLE_COUNT
     MEAN_SAMPLE_COUNT = args.baselineSampleCount
 
-    # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
-    # the bucket is to number all the beads and select them at random using a corresponding table of
-    # random numbers. This method orders the beads in a virtual bucket with 0-3199 being white (0), and 
-    # 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups after randomly
-    # shuffling the array.
-    #populate_beads_ordered(BEAD_BUCKET_ARRAY)
-    populate_beads_mixed(BEAD_BUCKET_ARRAY)
-    shuffle(BEAD_BUCKET_ARRAY)
-
-    for x in range(0,cum_avg_cycles):
-        for r in range(0,sample_count):
-            
-            # I've observed that on-balance, my custom method for randomly sampling an array results in cumulative
-            # averages of '10.xx', while Random.Sample() results in cumulative averages of '9.9xx'.
-            if customSampleMethod == True:
-                red_beads_pulled = pull_sample_from_bucket(BEAD_BUCKET_ARRAY, PADDLE_LOT_SIZE).count(RED_BEAD)
-            else:
-                red_beads_pulled = rnd.sample(BEAD_BUCKET_ARRAY, PADDLE_LOT_SIZE).count(RED_BEAD)
-            
-            log.append(red_beads_pulled)
-            total_red_beads = total_red_beads + red_beads_pulled
-
-            # Shuffle the array to "redistribute" the red and white beads
-            shuffle(BEAD_BUCKET_ARRAY)
-            shuffle(BEAD_BUCKET_ARRAY)
-            
+    initialize_bead_bucket(BEAD_BUCKET_ARRAY)
+    for _ in range(0,args.cumulativeAvgCycles):
+        log, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.customSampleMethod)
 
         # Calculate cumulative average for the "day"    
         cum_avg_log.append(round((total_red_beads/sample_count),2)) 
         cum_avg_total = cum_avg_total + (total_red_beads / sample_count)
         total_red_beads = 0
     
-    print("\n")
-    print("\nCumulative Average Cycles: " + str(cum_avg_cycles))
-    print("Red Bead Experiment Cycles: " + str(experiment_cycles))
-    print("Samples Withdrawn per Experiment Cycle: " + str(RED_BEAD_EXPERIMENT_LOTS))
-    print("Total Randomly-Drawn Sample Lots: " + str(sample_count * cum_avg_cycles))
-    print("\nCumulative Averages per Experiment Cycle: " + str(cum_avg_log))
-    print("\nOverall Cumulative Average: " + str(round(cum_avg_total / (cum_avg_cycles),2)) + "\n\n")
-    
-    mean_array = get_mean_array(log)
-    upl_array = get_limits_array(UPPER_PROC_LIMIT,log)
-    lpl_array = get_limits_array(LOWER_PROC_LIMIT,log)
-    #moving_range_array = get_moving_range_array(log)
-    #moving_range_limits_array = get_moving_range_limits_array(moving_range_array)
+    print_results(args, cum_avg_log, cum_avg_total, sample_count)
+    plot_results(log,args)
 
-    plot_red_beads(log,mean_array,upl_array,lpl_array)
-    #plot_moving_range(get_moving_range_array(log), moving_range_limits_array)
+# As you'd expect...
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Red Bead Experiment Simulation")
+    parser.add_argument('--experimentCycles', type=int, default=10, help='How many experiments should we run (default: 10)?')
+    parser.add_argument('--cumulativeAvgCycles', type=int, default=1, help='How many cycles to calculate the cumulative average against (default: 1)?')
+    parser.add_argument('--customSampleMethod', action="store_true", help='Use custom sampling method to select beads (default: False).')
+    parser.add_argument('--baselineSampleCount', type=int, default=RED_BEAD_EXPERIMENT_LOTS * 2, help='How many data points to include for calculating limits.')
+    return parser.parse_args()
+
+# In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
+# the bucket is to number all the beads and select them at random using a corresponding table of
+# random numbers. This method orders the beads in a virtual bucket with 0-3199 being white (0), and 
+# 3200-3999 red (1). We'll use the ordinal index for each bead for random lookups after randomly
+# shuffling the array.
+def initialize_bead_bucket(bead_bucket_array):
+    #populate_beads_ordered(bead_bucket_array)
+    populate_beads_random(bead_bucket_array)
+    shuffle(bead_bucket_array)
+    return bead_bucket_array
+
+# The simulation engine...
+def run_experiment_cycle(bead_bucket, sample_count, customSampleMethod):
+    log = []
+    total_red_beads = 0
+    for _ in range(sample_count):
+        if customSampleMethod:
+            red_beads_pulled = pull_sample_from_bucket(bead_bucket, PADDLE_LOT_SIZE).count(RED_BEAD)
+        else:
+            red_beads_pulled = rnd.sample(bead_bucket, PADDLE_LOT_SIZE).count(RED_BEAD)
+        
+        log.append(red_beads_pulled)
+        total_red_beads += red_beads_pulled
+        shuffle(bead_bucket)
+        shuffle(bead_bucket)
+    
+    return log, total_red_beads
+
+# For confirming results...
+def print_results(args, cum_avg_log, cum_avg_total, sample_count):
+    print("\n")
+    print(f"\nCumulative Average Cycles: {args.cumulativeAvgCycles}")
+    print(f"Red Bead Experiment Cycles: {args.experimentCycles}")
+    print(f"Samples Withdrawn per Experiment Cycle: {RED_BEAD_EXPERIMENT_LOTS}")
+    print(f"Total Randomly-Drawn Sample Lots: {sample_count * args.cumulativeAvgCycles}")
+    print(f"Cumulative Averages per Experiment Cycle: {cum_avg_log}")
+    print(f"Overall Cumulative Average: {round(cum_avg_total / args.cumulativeAvgCycles, 2)}\n\n")
+
+# Guess what this does?
+def plot_results(log,args):
+    mean_array = get_mean_array(log)
+    upl_array = get_limits_array(UPPER_PROC_LIMIT, log)
+    lpl_array = get_limits_array(LOWER_PROC_LIMIT, log)
+    plot_red_beads(log, mean_array, upl_array, lpl_array, args)
 
 # Return an array containing the upper and lower process limits as repeating
 # values for plotting on a chart
 def get_limits_array(limit_type, redbead_array):
-    proc_limit_array = []
-    proc_limit = 0
     mR_BAR = get_mr_bar(redbead_array)
     mean = round(get_mean_array(redbead_array)[0],2)
     
@@ -138,13 +142,9 @@ def get_limits_array(limit_type, redbead_array):
         proc_limit = round(mean + 3 * mR_BAR / 1.128, 1)
     else:
         proc_limit = round(mean - 3 * mR_BAR / 1.128, 1)
-        if proc_limit < 0:
-            proc_limit = 0
+        proc_limit = max(proc_limit, 0)  # Ensure proc_limit is not negative
     
-    for x in range(len(redbead_array)):
-        proc_limit_array.append(proc_limit)
-
-    return proc_limit_array
+    return [proc_limit] * len(redbead_array)
  
 # Calculate the average moving range (mR-bar) of a set of values in an array
 # and return as an integer
@@ -163,27 +163,12 @@ def get_mr_bar(redbead_array):
 
     return round(mR_BAR,0)
 
-# Calculate the mean and return as an array of repeating values for 
-# plotting as the control line in the Process Behaviour Chart.
+# Returns an array of repeating values representing the mean of a given array.
+# We need to do this to draw the mean and process limits on the chart.
 def get_mean_array(redbead_array):
-
-    mean_array = []
-    mean =0
-    sample_count = 0
-
-    if MEAN_SAMPLE_COUNT == -1:
-        sample_count = len(redbead_array)
-    else:
-        sample_count = MEAN_SAMPLE_COUNT
-    
-    # Calculate the mean using either the entire array (default)
-    # or the first 'x' elements
-    mean = np.mean(redbead_array[:sample_count])
-
-    for x in range(len(redbead_array)):
-        mean_array.append(round(mean,1))
-    
-    return mean_array
+    sample_count = len(redbead_array) if MEAN_SAMPLE_COUNT == -1 else MEAN_SAMPLE_COUNT
+    mean = round(np.mean(redbead_array[:sample_count]), 1)
+    return [mean] * len(redbead_array)
 
 # Calculate the moving ranges and return them as an array of n-1 deltas
 def get_moving_range_array(redbead_array):
@@ -194,31 +179,23 @@ def get_moving_range_array(redbead_array):
     
     return movingRangeArray
 
-# Given a array containing moving range deltas, calculate the upper limit
+# Given a array containing moving range deltas, estimate the upper limit
 # as 3.268 *  the mean, and return as an array of repeating values. 
-# This will be used to draw the upper limit line on a chart.
-def get_moving_range_limits_array(movingRangeArray):
-    
-    movingRangeLimitsArray = []
-    mR_BAR = 0
+# This will be used to draw the upper limit line on an mR chart.
+def get_moving_range_limits_array(moving_range_array):
+    if not moving_range_array:
+        return []
 
-    for x in range(len(movingRangeArray)-1):
-        mR_BAR = mR_BAR + movingRangeArray[x]
-    
-    mR_BAR = mR_BAR / len(movingRangeArray)
+    mR_BAR = sum(moving_range_array) / len(moving_range_array)
     upl = mR_BAR * 3.268
-    
-    for x in range(len(movingRangeArray)-1):
-        movingRangeLimitsArray.append(upl)
 
-    return movingRangeLimitsArray
+    return [upl] * len(moving_range_array)
 
 # Render the Process Behaviour Chart using arrays for data points, mean, upper process limits, 
 # and lower process limits
-def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array):
+def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array, args):
 
     fig = go.Figure()
-    args = ARGPARSER.parse_args()
     # Number of points to highlight
     highlight_points = args.baselineSampleCount
 
@@ -299,19 +276,6 @@ def plot_moving_range(moving_range_array,moving_range_limits_array):
 
     return fig
 
-def plot_test():
-    df = pd.DataFrame(dict(
-    x = [1, 3, 2, 4],
-    y = [1, 2, 3, 4]
-    ))
-
-    fig = px.line(df, x="x", y="y", title="Unsorted Input") 
-    fig.show()
-
-    df = df.sort_values(by="x")
-    fig = px.line(df, x="x", y="y", title="Sorted Input", markers=True) 
-    fig.show()
-
 def pull_sample_from_bucket(bucket_array,paddle_size):
     sample_array = []
     paddle_index_log = []
@@ -328,22 +292,20 @@ def pull_sample_from_bucket(bucket_array,paddle_size):
 
     return sample_array
 
-def populate_beads_mixed(bucket_array):
+# Randomly fills the sample bucket with red and white beads
+def populate_beads_random(bucket_array):
     red_beads_count = 0
+    total_beads = len(bucket_array)
     while red_beads_count <= RED_BEADS_IN_BUCKET:
-        index = rnd.randint(0,len(bucket_array) - 1)
+        index = rnd.randint(0,total_beads- 1)
         if(bucket_array[index] == 0):
             bucket_array[index] = RED_BEAD
             red_beads_count = red_beads_count + 1
 
+# Fills the sample bucket with 3,2000 white beads first, then 800 red beads
 def populate_beads_ordered(bucket_array):
     for bead in range(len(bucket_array)):
-        if bead <= WHITE_BEADS_IN_BUCKET - 1:
-            #print("White Bead")
-            bucket_array[bead] = WHITE_BEAD
-        else:
-            #print ("Red Bead")
-            bucket_array[bead] = RED_BEAD
+        bucket_array[bead] = WHITE_BEAD if bead < WHITE_BEADS_IN_BUCKET else RED_BEAD
 
 if __name__ == "__main__":
     main()
