@@ -49,23 +49,16 @@ RED_BEAD_EXPERIMENT_LOTS = 24
 
 ARGPARSER = argparse.ArgumentParser(description='ReadBeadSim argument parser')
 
-# How many samples to include in the calculation of the average and mR-BAR
-# for setting the process limits. To default to the entire array, set at -1.
-# To run an interesting experiment, calculate the mean and limits using the
-# RED_BEAD_EXPERIMENT_LOTS*2 to see how well they predict the range of variation.
-BASELINE_SAMPLE_COUNT = -1
+BASELINE_PERIOD_ALL = -1
 
 def main():
 
     args = parse_arguments()
-
     log = []
     cum_avg_log = []
     total_red_beads = 0
     cum_avg_total = 0 
     sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
-    global BASELINE_SAMPLE_COUNT
-    BASELINE_SAMPLE_COUNT = args.baselineSampleCount
 
     initialize_bead_bucket(BEAD_BUCKET_ARRAY)
     for _ in range(0,args.cumulativeAvgCycles):
@@ -85,7 +78,7 @@ def parse_arguments():
     parser.add_argument('--experimentCycles', type=int, default=10, help='How many experiments should we run (default: 10)?')
     parser.add_argument('--cumulativeAvgCycles', type=int, default=1, help='How many cycles to calculate the cumulative average against (default: 1)?')
     parser.add_argument('--customSampleMethod', action="store_true", help='Use custom sampling method to select beads (default: False).')
-    parser.add_argument('--baselineSampleCount', type=int, default=RED_BEAD_EXPERIMENT_LOTS * 2, help='How many data points to include for calculating limits.')
+    parser.add_argument('--baselineSamplePeriod', type=int, default=-1, help='How many data points to include for calculating limits.')
     return parser.parse_args()
 
 # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
@@ -129,21 +122,20 @@ def print_results(args, cum_avg_log, cum_avg_total, sample_count):
 
 # Guess what this does?
 def plot_results(log,args):
-    mean_array = get_mean_array(log)
-    upl_array = get_limits_array(UPPER_PROC_LIMIT, log)
-    lpl_array = get_limits_array(LOWER_PROC_LIMIT, log)
-    
+    mean_array = get_mean_array(log,args.baselineSamplePeriod)
+    upl_array = get_limits_array(log, UPPER_PROC_LIMIT, args)
+    lpl_array = get_limits_array(log, LOWER_PROC_LIMIT, args)
     mR_array = get_moving_range_array(log)
     npl_array = get_moving_range_limits_array(mR_array)
-    #fig1 = plot_red_beads(log, mean_array, upl_array, lpl_array, args)
+    
     fig1 = plot_xmr_chart(log, mean_array, upl_array, lpl_array, mR_array, npl_array, args)
     fig1.show()
 
 # Return an array containing the upper and lower process limits as repeating
 # values for plotting on a chart
-def get_limits_array(limit_type, redbead_array):
-    mR_BAR = get_mr_bar(redbead_array)
-    mean = round(get_mean_array(redbead_array)[0],2)
+def get_limits_array(redbead_array, limit_type, args):
+    mR_BAR = get_mr_bar(redbead_array,args.baselineSamplePeriod)
+    mean = round(get_mean_array(redbead_array,args.baselineSamplePeriod)[0],2)
     
     if limit_type == UPPER_PROC_LIMIT:
         proc_limit = round(mean + 3 * mR_BAR / 1.128, 1)
@@ -155,17 +147,17 @@ def get_limits_array(limit_type, redbead_array):
  
 # Calculate the average moving range (mR-bar) of a set of values in an array
 # and return as an integer
-def get_mr_bar(redbead_array):
+def get_mr_bar(redbead_array,baseline_sample_period):
     moving_range_array = get_moving_range_array(redbead_array)
-    sample_count = len(moving_range_array) if BASELINE_SAMPLE_COUNT == -1 else BASELINE_SAMPLE_COUNT - 1
+    sample_count = len(moving_range_array) if baseline_sample_period == BASELINE_PERIOD_ALL else baseline_sample_period - 1
     mR_BAR = np.mean(moving_range_array[:sample_count])
 
     return round(mR_BAR, 0)
 
 # Returns an array of repeating values representing the mean of a given array.
 # We need to do this to draw the mean and process limits on the chart.
-def get_mean_array(redbead_array):
-    sample_count = len(redbead_array) if BASELINE_SAMPLE_COUNT == -1 else BASELINE_SAMPLE_COUNT
+def get_mean_array(redbead_array,baseline_sample_period):
+    sample_count = len(redbead_array) if baseline_sample_period == BASELINE_PERIOD_ALL else baseline_sample_period
     mean = round(np.mean(redbead_array[:sample_count]), 1)
     return [mean] * len(redbead_array)
 
@@ -186,92 +178,29 @@ def get_moving_range_limits_array(moving_range_array):
         return []
 
     mR_BAR = sum(moving_range_array) / len(moving_range_array)
-    upl = mR_BAR * 3.268
+    npl = mR_BAR * 3.268
 
-    return [upl] * len(moving_range_array)
+    # Why +1? Because the moving range is always shown offset by one
+    return [npl] * (len(moving_range_array) + 1)
 
-# Render the Process Behaviour Chart using arrays for data points, mean, upper process limits, 
-# and lower process limits
-def plot_red_beads(redbead_array, mean_array, upl_array, lpl_array, args):
-
-    fig = go.Figure()
-    # Number of points to highlight
-    highlight_points = args.baselineSampleCount
-
-    fig.add_trace(
-        go.Scatter(
-            y=redbead_array, name='Red Beads', line=dict(color='royalblue', width=2), mode='lines+markers'
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            y=mean_array, name='Mean', line=dict(color='green', width=2)
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            y=upl_array, name='UPL', line=dict(color='red', width=2)
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            y=lpl_array, name='LPL', line=dict(color='red', width=2)
-        )
-    )
-
-    # Add a transparent rectangle to highlight the first 'highlight_points' data points
-    fig.add_shape(
-        type="rect",
-        x0=0, y0=min(min(upl_array), min(lpl_array)),
-        x1=highlight_points - 1, y1=max(max(upl_array), max(lpl_array)),
-        fillcolor="LightSkyBlue", opacity=0.3, line_width=0
-    )
-
-    fig.add_annotation(
-        x=highlight_points / 2,  # Positioning the text in the middle of the rectangle
-        y=max(upl_array),
-        text="<b>Baseline Period</b>",
-        showarrow=False,
-        font=dict(size=14, color="black"),
-        align="center",
-        xanchor="center",
-        yanchor="top"
-    )
-
-    #layout = go.Layout(title='Red Bead Experiment Simulation')
-    chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
-        "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
-        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(args.baselineSampleCount) + \
-        "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
-        "<b>UPL:</b> " +str(upl_array[0]) + "  " + \
-        "<b>LPL:</b> " +str(lpl_array[0]) + "</span>"
-
-    fig.update_layout(
-        title=dict(text=chart_title, x=0.5)
-    )
-    
-    #fig.show()
-    return fig
-
+# Plots the two complementary charts in a PBC
+# Yes, there are a lot of arguments to pass in...
 def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range_array, npl_array, args):
 
     fig = make_subplots(
         rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1,
-        row_heights=[0.8, 0.2]
+        row_heights=[0.8, 0.2] # Symmetry! 80/20 split
     )
 
-     # Number of points to highlight
-    highlight_points = args.baselineSampleCount
+    # Number of points to highlight for the baseline period
+    highlight_points = args.baselineSamplePeriod
 
-    # Add the red bead plot to the first subplot
+    # Add the red bead plot to the top subplot
     fig.add_trace(
         go.Scatter(
             x=list(range(len(redbead_array))),
             y=redbead_array,
-            name='Red Beads',
+            name='Individuals (X)',
             line=dict(color='royalblue', width=2),
             mode='lines+markers'
         ),
@@ -308,34 +237,36 @@ def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range
         row=1, col=1
     )
 
-    # Add a transparent rectangle to highlight the first 'highlight_points' data points
-    fig.add_shape(
-        type="rect",
-        x0=0, y0=min(min(upl_array), min(lpl_array)),
-        x1=highlight_points - 1, y1=max(max(upl_array), max(lpl_array)),
-        fillcolor="LightSkyBlue", opacity=0.3, line_width=0,
-        row=1, col=1
-    )
+    # Highlight the first 'x' samples if set
+    if args.baselineSamplePeriod != BASELINE_PERIOD_ALL:
+        
+        fig.add_shape(
+            type="rect",
+            x0=0, y0=min(min(upl_array), min(lpl_array)),
+            x1=highlight_points - 1, y1=max(max(upl_array), max(lpl_array)),
+            fillcolor="LightSkyBlue", opacity=0.3, line_width=0,
+            row=1, col=1
+        )
+        fig.add_annotation(
+            x=highlight_points / 2,  # Positioning the text in the middle of the rectangle
+            y=max(upl_array),
+            text="<b>Baseline Period</b>",
+            showarrow=False,
+            font=dict(size=12, color="black"),
+            align="center",
+            xanchor="center",
+            yanchor="top",
+            opacity=0.7,
+            row=1, col=1
+        )
 
-    fig.add_annotation(
-        x=highlight_points / 2,  # Positioning the text in the middle of the rectangle
-        y=max(upl_array),
-        text="<b>Baseline Period</b>",
-        showarrow=False,
-        font=dict(size=14, color="black"),
-        align="center",
-        xanchor="center",
-        yanchor="top",
-        opacity=0.7,
-        row=1, col=1
-    )
-
-    # Add the moving range plot to the second subplot with an offset of one
+    # Add the moving range plot to the bottom subplot with an offset of one
+    # Why? Because moving ranges are pairwise deltas between successive data points
     fig.add_trace(
         go.Scatter(
             x=list(range(1, len(moving_range_array) + 1)),
             y=moving_range_array,
-            name='Moving Range',
+            name='Moving Range (mR)',
             line=dict(color='royalblue', width=2),
             mode='lines+markers'
         ),
@@ -354,10 +285,11 @@ def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range
         row=2, col=1
     )
 
-    # Update layout
+    # Update the top chart title
+    sample_count = len(redbead_array) if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
     chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
         "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
-        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(args.baselineSampleCount) + \
+        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(sample_count) + \
         "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
         "<b>UPL:</b> " + str(upl_array[0]) + "  " + \
         "<b>LPL:</b> " + str(lpl_array[0]) + "</span>"
@@ -366,12 +298,13 @@ def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range
         title=dict(text=chart_title, x=0.5)
     )
 
-    fig.update_xaxes(title_text="Sample", row=2, col=1)
-    fig.update_yaxes(title_text="Red Beads", row=1, col=1)
-    fig.update_yaxes(title_text="Moving Range", row=2, col=1)
+    fig.update_xaxes(title_text="Samples", row=2, col=1)
+    fig.update_yaxes(title_text="<span style='font-size:12px'><b>Individuals (X)</b></span>", row=1, col=1)
+    fig.update_yaxes(title_text="<span style='font-size:12px'><b>Moving Range<br>(mR)</b></span>", row=2, col=1)
 
     return fig
 
+# My custom method for drawing a random sample of beads from the bucket
 def pull_sample_from_bucket(bucket_array,paddle_size):
     sample_array = []
     paddle_index_log = []
@@ -388,7 +321,7 @@ def pull_sample_from_bucket(bucket_array,paddle_size):
 
     return sample_array
 
-# Randomly fills the sample bucket with red and white beads
+# Randomly fills the "sample bucket" with red and white beads
 def populate_beads_random(bucket_array):
     red_beads_count = 0
     total_beads = len(bucket_array)
@@ -402,26 +335,6 @@ def populate_beads_random(bucket_array):
 def populate_beads_ordered(bucket_array):
     for bead in range(len(bucket_array)):
         bucket_array[bead] = WHITE_BEAD if bead < WHITE_BEADS_IN_BUCKET else RED_BEAD
-
-# Plots the moving range
-# Returns the figure object of the chart
-def plot_moving_range(moving_range_array,moving_range_limits_array):
-
-    fig = go.Figure()
-    moving_range_array.insert(0,None)
-    fig.add_trace(
-        go.Scatter(
-            y=moving_range_array, name='Moving Range (mR)', line=dict(color='royalblue', width=2), mode='lines+markers'
-        )
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            y=moving_range_limits_array, name='UPL', line=dict(color='red', width=2)
-        )
-    )
-
-    return fig
 
 if __name__ == "__main__":
     main()
