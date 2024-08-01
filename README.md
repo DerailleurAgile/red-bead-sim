@@ -1,4 +1,4 @@
-# Red Bead Experiment Simulator
+# The Great Red Bead Experiment Simulator
 
 A simulation of Dr. W.E. Deming's Red Bead experiment using random sampling to test his assertion that there is a difference between mechanical and random sampling, and that there is no rational basis to equate the two for purposes of **prediction**. In his words, _"Statistical theory (theory of probability) as taught in the books for the theory of sampling and theory of distributions applies in the use of random numbers, but not in experiences of life."_
 
