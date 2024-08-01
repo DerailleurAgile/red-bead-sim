@@ -73,6 +73,19 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 ### Installation
 
+Download and install Python for your system:
+
+- [Python Releases for Windows](https://www.python.org/downloads/windows/)
+- [Python Releases for macOS](https://www.python.org/downloads/macos/)
+
+#### For Linux:
+
+```bash
+sudo apt update
+sudo apt install python3
+```
+
+
 1. **Clone the repository** (if you haven't already):
 
    ```bash
