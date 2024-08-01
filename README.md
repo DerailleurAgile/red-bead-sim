@@ -54,7 +54,7 @@ Overall Cumulative Average: 10.225833333333334
 
 ## Example Output
 
-Here are some sample charts the simulation can generate: the first is what I call a "standard" run using the default settings without providing any options, the second demonstrates using `--baselinePeriod` option to highlight a custom baseline period to calculate the limits against the first 96 data points in the series.
+Here are some sample charts the simulation can generate: the first is what I call a "standard" run using the default settings without providing any options, the second demonstrates using `--baselinePeriod` option to highlight a custom baseline period for calculating the limits against the first 96 data points in the series.
 
 ![Example Output](images/redbeadsim_standard_baseline_all.png)
 ![Example Output](images/redbeadsim_standard_baseline_96.png)
