@@ -48,6 +48,13 @@ Total Randomly-Drawn Sample Lots: 3600
 Overall Cumulative Average: 10.225833333333334
 ````
 
+## Example Output
+
+Here are some sample charts the simulation can generate: the first is what I call a "standard" run using the default settings without providing any options, the second demonstrates using `--baselinePeriod 96` option to highlight a custom baseline period to calculate the limits against.
+
+![Example Output](images/redbeadsim_standard_baseline_all.png)
+![Example Output](images/redbeadsim_standard_baseline_96.png)
+
 ## Observations
 
 As Dr. Deming postulated, drawing of lots using random numbers does yield a cumulative average of 10 red beads. For comparison, pictured below is a capture of 360 hand-sampled lots using a [3-D printed paddle](https://www.thingiverse.com/thing:3991096) modeled after the same one Deming used in his demonstrations of the Red Bead Experiment. Note the cumulative average of 9.69
