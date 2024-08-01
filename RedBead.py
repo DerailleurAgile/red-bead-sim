@@ -12,6 +12,7 @@
 # --cumulativeAvgCycles: How many master cycles to run experiments within; defaults to 1
 # --customSampleMethod: Flag to use my own method to draw samples; defaults to Random.Sample()
 # --baselineSamplePeriod: How many samples to calculate avg and limits against; defaults to ALL (-1)
+# --paddleLotSize: How many beads to sample per turn; defaults to 50 for the classic experiment
 
 
 import random as rnd
@@ -40,17 +41,12 @@ LOWER_PROC_LIMIT = 0
 # Define label text to identify the default sampling method used to populate the paddle
 SAMPLE_METHOD = "Random.Sample()"
 
-# Why 50? This goes back to the original design of the experiment that used a paddle with
-# 50 indentations in it that would be used to draw samples from the tray or bucket.
-PADDLE_LOT_SIZE = 50
-
 # Why 24? In the original Red Bead Experiment, six "willing workers" are employed for three days to pull
 # one sample each. Half are fired for poor performance at the end of the third day, leaving the remainder
 # to carry on with double-shifts. We dispense with the rating and ranking part of the exercise.
 RED_BEAD_EXPERIMENT_LOTS = 24
 
-ARGPARSER = argparse.ArgumentParser(description='ReadBeadSim argument parser')
-
+# Flag to indicate calculating limits against the entire set of data points
 BASELINE_PERIOD_ALL = -1
 
 def main():
@@ -64,7 +60,7 @@ def main():
 
     initialize_bead_bucket(BEAD_BUCKET_ARRAY)
     for _ in range(0,args.cumulativeAvgCycles):
-        log, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.customSampleMethod)
+        log, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.paddleLotSize, args.customSampleMethod)
 
         # Calculate cumulative average for the "day"    
         cum_avg_log.append(round((total_red_beads/sample_count),2)) 
@@ -77,10 +73,11 @@ def main():
 # As you'd expect...
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Red Bead Experiment Simulation")
-    parser.add_argument('--experimentCycles', type=int, default=10, help='How many experiments should we run (default: 10)?')
-    parser.add_argument('--cumulativeAvgCycles', type=int, default=1, help='How many cycles to calculate the cumulative average against (default: 1)?')
-    parser.add_argument('--customSampleMethod', action="store_true", help='Use custom sampling method to select beads (default: False).')
-    parser.add_argument('--baselineSamplePeriod', type=int, default=-1, help='How many data points to include for calculating limits.')
+    parser.add_argument('--experimentCycles', type=int, default=10, help='How many experiments should we run? (default: 10)')
+    parser.add_argument('--cumulativeAvgCycles', type=int, default=1, help='How many cycles to calculate the cumulative average against? (default: 1)')
+    parser.add_argument('--customSampleMethod', action="store_true", help='Use custom sampling method to select beads. (default: True)')
+    parser.add_argument('--baselineSamplePeriod', type=int, default=-1, help='How many data points to include for calculating limits? (default: -1 == ALL)')
+    parser.add_argument('--paddleLotSize', type=int, default=50, help='How many beads should we sample per turn? (default: 50)')
     return parser.parse_args()
 
 # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
@@ -95,14 +92,14 @@ def initialize_bead_bucket(bead_bucket_array):
     return bead_bucket_array
 
 # The simulation engine...
-def run_experiment_cycle(bead_bucket, sample_count, customSampleMethod):
+def run_experiment_cycle(bead_bucket, sample_count, paddle_lot_size, customSampleMethod):
     log = []
     total_red_beads = 0
     for _ in range(sample_count):
         if customSampleMethod:
-            red_beads_pulled = pull_sample_from_bucket(bead_bucket, PADDLE_LOT_SIZE).count(RED_BEAD)
+            red_beads_pulled = pull_sample_from_bucket(bead_bucket, paddle_lot_size).count(RED_BEAD)
         else:
-            red_beads_pulled = rnd.sample(bead_bucket, PADDLE_LOT_SIZE).count(RED_BEAD)
+            red_beads_pulled = rnd.sample(bead_bucket, paddle_lot_size).count(RED_BEAD)
         
         log.append(red_beads_pulled)
         total_red_beads += red_beads_pulled
@@ -290,8 +287,12 @@ def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range
     # Update the top chart title
     sample_count = len(redbead_array) if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
     chart_title = "<span style='font-weight:bold'>Red Bead Experiment Simulation Process Behaviour Chart</span><br>" + \
-        "<span style='font-size:12px'><b>Experiments: </b>" + str(args.experimentCycles) + " " + "<b>Data Points:</b> " + \
-        str(len(redbead_array)) + " <b>Method: </b>" + SAMPLE_METHOD + " <b>Baseline Sample Count: </b>" + str(sample_count) + \
+        "<span style='font-size:12px'>" + \
+        "<b>Experiments: </b>"+ str(args.experimentCycles) + " " + \
+        "<b>Paddle Size: </b>" + str(args.paddleLotSize) + " " + \
+        "<b>Data Points:</b> " + str(len(redbead_array)) + " " + \
+        "<b>Method: </b>" + SAMPLE_METHOD + " " + \
+        "<b>Baseline Sample Count: </b>" + str(sample_count) + \
         "<br><b>Mean:</b> " + str(mean_array[0]) + "  " + \
         "<b>UPL:</b> " + str(upl_array[0]) + "  " + \
         "<b>LPL:</b> " + str(lpl_array[0]) + "</span>"
