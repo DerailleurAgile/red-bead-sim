@@ -71,3 +71,9 @@ python ReadBeadSim.py [OPTIONS]
 - **`--customSampleMethod`**: Flag to use my own method to draw samples; omit to default to Random.Sample()
 - **`--baselineSamplePeriod`**: How many samples to calculate avg and limits against; defaults to ALL (-1)
 - **`--paddleLotSize`**: How many beads to sample per turn; defaults to 50 for the classic experiment
+
+### Example
+````
+python RedBeadSim.py --experimentCycles 15 --baselineSamplePeriod 96 --paddleLotSize 60
+````
+
