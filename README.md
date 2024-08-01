@@ -77,7 +77,7 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
    ```bash
    git clone https://github.com/DerailleurAgile/red-bead-sim.git
-   cd RedBeadSim
+   cd red-bead-sim
    ```
 
 2. **Install the dependencies**
