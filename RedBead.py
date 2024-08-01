@@ -26,15 +26,15 @@ from plotly.subplots import make_subplots
 
 # Deming used two different configurations of the experiment: 3000 White to 750 Red, as described in Out of the Crisis,
 # and 3200 White to 800 Red, as described in The New Economics - both work out to an 80/20 mix.
-RED_BEADS_IN_BUCKET = 750
-WHITE_BEADS_IN_BUCKET = 3000
+RED_BEADS_IN_BUCKET = 800
+WHITE_BEADS_IN_BUCKET = 3200
 BEAD_BUCKET_ARRAY = [0] * (RED_BEADS_IN_BUCKET + WHITE_BEADS_IN_BUCKET)
 
 # Define simple flags to identify the type of bead in the bucket or paddle
 RED_BEAD = 1
 WHITE_BEAD = 0
 
-# Define simple flags for determining whether to calculate 3σ units above or below the mean
+# Define simple flags for determining whether to calculate 3-sigma units above or below the mean
 UPPER_PROC_LIMIT = 1
 LOWER_PROC_LIMIT = 0
 
@@ -63,7 +63,7 @@ def main():
         log, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.paddleLotSize, args.customSampleMethod)
 
         # Calculate cumulative average for the "day"    
-        cum_avg_log.append(round((total_red_beads/sample_count),2)) 
+        cum_avg_log.append(round(np.mean(log[:args.baselineSamplePeriod]),2))
         cum_avg_total = cum_avg_total + (total_red_beads / sample_count)
         total_red_beads = 0
     
@@ -110,13 +110,18 @@ def run_experiment_cycle(bead_bucket, sample_count, paddle_lot_size, customSampl
 
 # For confirming results...
 def print_results(args, cum_avg_log, cum_avg_total, sample_count):
+    
+    baseline_sample_count = sample_count if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
+    
     print("\n")
     print(f"Total Beads: {len(BEAD_BUCKET_ARRAY)}")
     print(f"Cumulative Average Cycles: {args.cumulativeAvgCycles}")
     print(f"Red Bead Experiment Cycles: {args.experimentCycles}")
+    print(f"Paddle Lot Size: {args.paddleLotSize}")
     print(f"Samples Withdrawn per Experiment Cycle: {RED_BEAD_EXPERIMENT_LOTS}")
     print(f"Total Randomly-Drawn Sample Lots: {sample_count * args.cumulativeAvgCycles}")
-    print(f"Cumulative Averages per Experiment Cycle: {cum_avg_log}")
+    print(f"Baseline Sample Period: {baseline_sample_count}")
+    print(f"Cumulative Average for Baseline Sample Period: {cum_avg_log}")
     print(f"Overall Cumulative Average: {round(cum_avg_total / args.cumulativeAvgCycles, 2)}\n\n")
 
 # Guess what this does?
