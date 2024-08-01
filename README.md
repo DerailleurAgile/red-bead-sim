@@ -71,14 +71,14 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 <img src="https://github.com/DerailleurAgile/red-bead-sim/blob/main/images/redbead_sample_beads_imperfections.png" width=50% height=50% />
 
-### Installation
+## Installation
 
 Download and install Python for your system:
 
 - [Python Releases for Windows](https://www.python.org/downloads/windows/)
 - [Python Releases for macOS](https://www.python.org/downloads/macos/)
 
-#### For Linux:
+### For Linux:
 
 ```bash
 sudo apt update
