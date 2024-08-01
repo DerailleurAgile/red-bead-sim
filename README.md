@@ -85,3 +85,7 @@ python ReadBeadSim.py [OPTIONS]
 python RedBeadSim.py --experimentCycles 15 --baselineSamplePeriod 96 --paddleLotSize 60
 ````
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
