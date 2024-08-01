@@ -63,6 +63,7 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 ## Usage
 ````
 python ReadBeadSim.py [OPTIONS]
+````
 
 ### Options
 - **`--experimentCycles <int>`**: How many Red Bead Experiments to run; defaults to 10
