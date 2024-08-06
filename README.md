@@ -73,18 +73,17 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 ## New Features
 
-### Highlight Rule 2 Signals
-
-By default, the "X" or Individuals chart now shows data points that meet the criteria for a "Rule 2 Signal", ie. eight or more consecutive points above or below the mean.
-
-![Highlight Rule 2 Signals](images/redbead_sim_rule2_signals.png)
-
 ### Display Total Red Beads
 
 The chart header now includes a total count of red beads drawn across the entire run of simulated experiments.
 
 ![Display Total Red Beads](images/redbead_sim_total_redbeads.png)
 
+### Highlight Rule 2 Signals
+
+By default, the "X" or Individuals chart now shows data points that meet the criteria for a "Rule 2 Signal", ie. eight or more consecutive points above or below the mean.
+
+![Highlight Rule 2 Signals](images/redbead_sim_rule2_signals.png)
 
 ### Visual Aids for Sigma Units of Dispersion
 
