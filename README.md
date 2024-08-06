@@ -71,6 +71,14 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 <img src="https://github.com/DerailleurAgile/red-bead-sim/blob/main/images/redbead_sample_beads_imperfections.png" width=50% height=50% />
 
+## New Features
+
+### Visual Aids for Sigma Units of Dispersion
+
+Use the ````--showSigmaUnitsHighlights```` option with 1, 2, or 3 to add corresponding visual aids that capture the data points in bands around the mean. This helps to better understand "The Empirical Rule" behind how Process Behaviour Charts work and why 3σ was chosen to avoid false special-cause sigals.
+
+![Visual Aids for Sigma Units of Dispersion](images/redbeadsim_sigma_units.png)
+
 ## Installation
 
 Download and install Python for your system:
