@@ -79,6 +79,12 @@ By default, the "X" or Individuals chart now shows data points that meet the cri
 
 ![Highlight Rule 2 Signals](images/redbead_sim_rule2_signals.png)
 
+### Display Total Red Beads
+
+The chart header now includes a total count of red beads drawn across the entire run of simulated experiments.
+
+![Display Total Red Beads](images/redbead_sim_total_redbeads.png)
+
 
 ### Visual Aids for Sigma Units of Dispersion
 
