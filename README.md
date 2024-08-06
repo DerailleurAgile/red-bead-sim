@@ -81,6 +81,12 @@ Use the ````--showSigmaUnitsHighlights```` option with 1, 2, or 3 to add corresp
 
 ![Visual Aids for Sigma Units of Dispersion](images/redbeadsim_sigma_units.png)
 
+### Red Beads Distribution Histogram
+
+Use the ````--showDistribution``` option to generate a distribution chart in addition to the Process Behaviour Chart for a simulation. The chart includes visual aids for the process limits and mean.
+
+![Red Beads Distribution Histogram](images/redbeadsim_distribution_chart.png)
+
 ## Installation
 
 Download and install Python for your system:
