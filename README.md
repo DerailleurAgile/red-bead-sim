@@ -75,7 +75,7 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 ### Visual Aids for Sigma Units of Dispersion
 
-Use the ````--showSigmaUnitsHighlights```` option with 1, 2, or 3 to add corresponding visual aids that capture the data points in bands around the mean. This helps to better understand "The Empirical Rule" behind how Process Behaviour Charts work and why 3σ was chosen to avoid false special-cause sigals.
+Use the ````--showSigmaUnitsHighlights```` option with 1, 2, or 3 to add corresponding visual aids that capture the data points in sigma units of dispersion bands around the mean, along with percentages. This helps to better understand ["The Empirical Rule"](https://digestibledeming.substack.com/i/137149558/empirical-rule) behind how Process Behaviour Charts work and why 3σ was chosen to avoid false special-cause sigals.
 
 ![Visual Aids for Sigma Units of Dispersion](images/redbeadsim_sigma_units.png)
 
