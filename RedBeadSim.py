@@ -535,7 +535,7 @@ def get_rule2_indices(redbead_array, mean_value, min_run_length=8):
 # NEW!
 def get_chart_header(args, redbead_array, mean_array, upl_array, lpl_array, chart_title_text=""):
     """Generate the chart header text."""
-    baseline_sample_count = len(redbead_array) if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
+    baseline_sample_period = len(redbead_array) if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
     chart_title = (
         f"<span style='font-weight:bold'>{chart_title_text}</span><br>"
         f"<span style='font-size:12px'>"
@@ -543,7 +543,7 @@ def get_chart_header(args, redbead_array, mean_array, upl_array, lpl_array, char
         f"<b>Paddle Size: </b>{args.paddleLotSize} "
         f"<b>Data Points:</b> {len(redbead_array)} "
         f"<b>Method: </b>{SAMPLE_METHOD} "
-        f"<b>Baseline Sample Count: </b>{baseline_sample_count} "
+        f"<b>Baseline Sample Period: </b>{baseline_sample_period} "
         f"<b>Total Red Beads: </b>{sum(redbead_array)} "
         f"<br><b>Mean:</b> {mean_array[0]} "
         f"<b>UPL:</b> {upl_array[0]} "
