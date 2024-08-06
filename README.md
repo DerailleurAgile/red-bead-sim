@@ -71,6 +71,18 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 <img src="https://github.com/DerailleurAgile/red-bead-sim/blob/main/images/redbead_sample_beads_imperfections.png" width=50% height=50% />
 
+## See Also
+
+For deeper-dives into understanding the **Red Bead Experiment** and how **Process Behaviour Charts** work, check out the following posts from my newsletter, **The Digestible Deming**:
+
+- [The Parable of the Red Beads](https://digestibledeming.substack.com/p/the-parable-of-the-red-beads)
+- [Red Bead Redux](https://digestibledeming.substack.com/p/red-bead-redux)
+- [Enumerative vs. Analytic Studies](https://digestibledeming.substack.com/p/enumerative-versus-analytic-studies)
+- [Control Charts](https://digestibledeming.substack.com/p/control-charts)
+- [A Rational Basis for Prediction](https://digestibledeming.substack.com/p/a-rational-basis-for-prediction)
+- [Understanding How Process Behaviour Charts Work](https://digestibledeming.substack.com/p/understanding-how-process-behaviour)
+
+
 ## New Features
 
 ### Display Total Red Beads
