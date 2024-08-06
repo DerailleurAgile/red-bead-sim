@@ -110,10 +110,14 @@ python ReadBeadSim.py [OPTIONS]
 - **`--customSampleMethod`**: Flag to use my own method to draw samples; omit to default to Random.Sample()
 - **`--baselineSamplePeriod <int>`**: How many samples to calculate avg and limits against; defaults to ALL (-1) if omitted
 - **`--paddleLotSize <int>`**: How many beads to sample per turn; defaults to 50 for the classic experiment
+- **`--showSigmaUnitHighlights <int>`**: Show visual aids for 1, 2, or 3 sigma units of dispersion around the mean; defaults to 0
+- **`--showDistribution`**: Flag to show red beads as a distribution histogram with process limits
+- **`--exportToExcel`**: Flag to export results to an Excel workbook in the execution folder
+- **`--showDegreesOfFreedom`**: Flag to show graph of uncertainty in limits
 
 ### Example
 ````
-python RedBeadSim.py --experimentCycles 15 --baselineSamplePeriod 96 --paddleLotSize 60
+python RedBeadSim.py --experimentCycles 15 --baselineSamplePeriod 96 --paddleLotSize 25
 ````
 
 ## License
