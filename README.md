@@ -87,6 +87,12 @@ Use the ````--showDistribution```` option to generate a distribution chart in ad
 
 ![Red Beads Distribution Histogram](images/redbeadsim_distribution_chart.png)
 
+### Export Results to Excel
+
+Use the ````--exportToExcel```` option to capture simulation results in an Excel workbook. The data has been arranged into columns that can be easily used to generate an XmR chart.
+
+![Red Beads Distribution Histogram](redbead_sim_excel_export.png)
+
 ## Installation
 
 Download and install Python for your system:
