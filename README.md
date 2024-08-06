@@ -73,6 +73,13 @@ Why is the cumulative average for the manually-drawn samples not aligning with t
 
 ## New Features
 
+### Highlight Rule 2 Signals
+
+By default, the "X" or Individuals chart now shows data points that meet the criteria for a "Rule 2 Signal", ie. eight or more consecutive points above or below the mean.
+
+![Highlight Rule 2 Signals](images/redbead_sim_rule2_signals.png)
+
+
 ### Visual Aids for Sigma Units of Dispersion
 
 Use the ````--showSigmaUnitsHighlights```` option with 1, 2, or 3 to add corresponding visual aids that capture the data points in sigma units of dispersion bands around the mean, along with percentages. This helps to better understand ["The Empirical Rule"](https://digestibledeming.substack.com/i/137149558/empirical-rule) behind how Process Behaviour Charts work and why 3σ was chosen to avoid false special-cause signals.
