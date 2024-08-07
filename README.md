@@ -115,6 +115,8 @@ Use the ````--showDistribution```` option to generate a distribution chart in ad
 
 Use the ````--exportToExcel```` option to capture simulation results in an Excel workbook. The data has been arranged into columns that can be easily used to generate an XmR chart.
 
+**NEW!** Red bead cells are now highlighted to show Rule 1 (red) and Rule 2 (orange) signals.
+
 ![Red Beads Distribution Histogram](images/redbead_sim_excel_export.png)
 
 ## Installation
