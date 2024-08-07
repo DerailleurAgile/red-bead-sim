@@ -275,7 +275,7 @@ def get_mr_bar(redbead_array,baseline_sample_period):
 def get_mean_array(redbead_array,baseline_sample_period):
     """Return an array of the mean value repeated for plotting as a line in the XmR chart"""
     sample_count = len(redbead_array) if baseline_sample_period == BASELINE_PERIOD_ALL else baseline_sample_period
-    mean = round(np.mean(redbead_array[:sample_count]), 1)
+    mean = round(np.mean(redbead_array[:sample_count]), 2)
     return [mean] * len(redbead_array)
 
 # Calculate the moving ranges and return them as an array of n-1 deltas
