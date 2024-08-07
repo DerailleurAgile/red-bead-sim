@@ -29,6 +29,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 
 # Deming used two different configurations of the experiment: 3000 White to 750 Red, as described in Out of the Crisis,
 # and 3200 White to 800 Red, as described in The New Economics
@@ -57,6 +59,9 @@ BASELINE_PERIOD_ALL = -1
 
 LABEL_ALIGN_CENTRE = "centre"
 LABEL_ALIGN_RIGHT = "right"
+LIGHT_GREEN_FILL = "90EE90"
+LIGHT_ORANGE_FILL = "FFA07A"
+LIGHT_RED_FILL = "FFCCCC"
 
 def main():
     """Main function to run the Red Bead Experiment simulation."""
@@ -153,30 +158,30 @@ def print_results(args, cum_avg_log, cum_avg_total, sample_count):
 def plot_results(redbead_array,args):
     """Plots the XmR, shows sigma unit highlights, and exports to Excel if needed"""
     mean_array = get_mean_array(redbead_array,args.baselineSamplePeriod)
-    upl_array = get_limits_array(redbead_array, UPPER_PROC_LIMIT, 3, args)
-    lpl_array = get_limits_array(redbead_array, LOWER_PROC_LIMIT, 3, args)
+    upl_array = get_limits_array(redbead_array, mean_array[0], UPPER_PROC_LIMIT, 3, args)
+    lpl_array = get_limits_array(redbead_array, mean_array[0], LOWER_PROC_LIMIT, 3, args)
     mR_array = get_moving_range_array(redbead_array)
-    npl_array = get_moving_range_limits_array(mR_array)
+    mR_UPL = get_moving_range_limits_array(mR_array)
     
-    fig1 = plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, mR_array, npl_array, args)
+    fig1 = plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, mR_array, mR_UPL, args)
 
     # Draw highlight boxes for sigma unit ranges, if supplied
     if args.showSigmaUnitHighlights > 0:
         unit = 1
         while unit <= args.showSigmaUnitHighlights:
-            upl_array = get_limits_array(redbead_array, UPPER_PROC_LIMIT, unit, args)
-            lpl_array = get_limits_array(redbead_array, LOWER_PROC_LIMIT, unit, args)
+            sigma_upl_array = get_limits_array(redbead_array, mean_array[0], UPPER_PROC_LIMIT, unit, args)
+            sigma_lpl_array = get_limits_array(redbead_array, mean_array[0], LOWER_PROC_LIMIT, unit, args)
 
-            percent_within_limits = percent_red_beads_in_range(redbead_array, lpl_array[0], upl_array[0])
+            percent_within_limits = percent_red_beads_in_range(redbead_array, sigma_lpl_array[0], sigma_upl_array[0])
 
             # fig, upl_array, lpl_array, highlight_points, fill_color, box_label:""
-            draw_highlight_box(fig1, upl_array, lpl_array, len(redbead_array), "Magenta", 0.1, f"{unit}σ<br>{percent_within_limits}%", LABEL_ALIGN_RIGHT)
+            draw_highlight_box(fig1, sigma_upl_array, sigma_lpl_array, len(redbead_array), "Magenta", 0.1, f"{unit}σ<br>{percent_within_limits}%", LABEL_ALIGN_RIGHT)
             unit+=1
 
     fig1.show()
 
     if args.exportToExcel:
-        export_to_excel(redbead_array, mean_array, mR_array, upl_array, lpl_array, npl_array)
+        export_to_excel(redbead_array, mean_array, mR_array, upl_array, lpl_array, mR_UPL)
 
 def percent_red_beads_in_range(arr, min, max):
     """Return the percentage of red beads in an array that fall between two points."""
@@ -186,7 +191,7 @@ def percent_red_beads_in_range(arr, min, max):
 
     return percent_red
 
-# Write the data to Excel
+# UPDATED!
 def export_to_excel(redbead_array, mean_array, mR_array, upl_array, lpl_array, mr_upl_array):
     """Export the simulation data to an Excel worksheet."""
     moving_range_array = [None] + mR_array
@@ -197,22 +202,51 @@ def export_to_excel(redbead_array, mean_array, mR_array, upl_array, lpl_array, m
         'mR': moving_range_array,
         'upl': upl_array,
         'lpl': lpl_array,
-        'mr-upl': mr_upl_array
+        'mR-upl': mr_upl_array
     })
 
     time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     export_filename = "redbeadsim-" + time_stamp + ".xlsx"
     df_combined.to_excel(export_filename, index=False)
     export_filename = os.getcwd() + "/" + export_filename
-
     print(f"Simulation data exported to: {export_filename}")
+
+    # Highlight Rule 1 & 2 data points if they exist
+    rule1_above_indices, rule1_below_indices = get_rule1_indices(redbead_array, upl_array[0], lpl_array[0])
+    rule2_above_indices, rule2_below_indices = get_rule2_indices(redbead_array, mean_array[0])
+    
+    if rule1_above_indices or rule1_below_indices or rule2_above_indices or rule2_below_indices:
+        workbook = load_workbook(export_filename)
+        worksheet = workbook.active
+
+        if rule2_above_indices:
+            highlight_worksheet_cells(worksheet, rule2_above_indices, LIGHT_ORANGE_FILL, 1)
+        
+        if rule2_below_indices:
+            highlight_worksheet_cells(worksheet, rule2_below_indices, LIGHT_ORANGE_FILL, 1)
+        
+        if rule1_above_indices:
+            highlight_worksheet_cells(worksheet, rule1_above_indices, LIGHT_RED_FILL, 1)
+        
+        if rule1_below_indices:
+            highlight_worksheet_cells(worksheet, rule1_below_indices, LIGHT_RED_FILL, 1)
+
+        print(f"Worksheet includes Rule 1 or Rule 2 highlights.")
+        workbook.save(export_filename)
+
+# NEW! In an effort to follow DRY principles...
+def highlight_worksheet_cells(worksheet, indices, cell_color, column):
+    """Helper method to highlight cells in the worksheet."""
+    fill = PatternFill(start_color=cell_color, end_color=cell_color, fill_type="solid")
+    for row_idx in indices:
+        cell = worksheet.cell(row=row_idx + 2, column=column)  # +2 to skip header and 1-based indexing
+        cell.fill = fill
 
 # Return an array containing the upper and lower process limits as repeating
 # values for plotting on a chart
-def get_limits_array(redbead_array, limit_type, sigma_units, args):
+def get_limits_array(redbead_array, mean, limit_type, sigma_units, args):
     """Return an array of process limits for plotting."""
     mR_BAR = get_mr_bar(redbead_array,args.baselineSamplePeriod)
-    mean = round(get_mean_array(redbead_array,args.baselineSamplePeriod)[0],2)
     
     if sigma_units < 0 or sigma_units > 3:
         # throw error here
@@ -234,7 +268,7 @@ def get_mr_bar(redbead_array,baseline_sample_period):
     sample_count = len(moving_range_array) if baseline_sample_period == BASELINE_PERIOD_ALL else baseline_sample_period - 1
     mR_BAR = np.mean(moving_range_array[:sample_count])
 
-    return round(mR_BAR, 0)
+    return round(mR_BAR, 2)
 
 # Returns an array of repeating values representing the mean of a given array.
 # We need to do this to draw the mean and process limits on the chart.
@@ -263,14 +297,14 @@ def get_moving_range_limits_array(moving_range_array):
         return []
 
     mR_BAR = sum(moving_range_array) / len(moving_range_array)
-    npl = mR_BAR * 3.268
+    mR_UPL = mR_BAR * 3.268
 
     # Why +1? Because the moving range is always shown offset by one
-    return [npl] * (len(moving_range_array) + 1)
+    return [mR_UPL] * (len(moving_range_array) + 1)
 
 # Plots the two complementary charts in a PBC
 # Yes, there are a lot of arguments to pass in...
-def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range_array, npl_array, args):
+def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range_array, mR_UPL, args):
     """Plot the Red Bead Experiment X-mR chart"""
      # Number of points to highlight for the baseline period
     baseline_highlight_points = args.baselineSamplePeriod
@@ -342,13 +376,13 @@ def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range
         row=2, col=1
     )
 
-    # Add the upper process limit for the moving range -- I call it NPL or "natural process limit"
+    # Add the upper process limit for the moving range -- I call it mR_UPL or "natural process limit"
     # to distinguish it from the other limits.
     fig.add_trace(
         go.Scatter(
-            x=list(range(len(npl_array))),
-            y=npl_array,
-            name='NPL',
+            x=list(range(len(mR_UPL))),
+            y=mR_UPL,
+            name='mR-UPL',
             line=dict(color='red', width=2)
         ),
         row=2, col=1
@@ -371,24 +405,19 @@ def plot_xmr_chart(redbead_array, mean_array, upl_array, lpl_array, moving_range
 # NEW!
 def plot_rule_2_signals(fig, redbead_array, mean_array):
     """Highlight Rule 2 signals in the X-chart."""
-    above_indices, below_indices = get_rule2_indices(redbead_array, mean_array[0])
-
-    # Flatten the list of lists for indices
-    flattened_above_indices = [index for sublist in above_indices for index in sublist]
-    flattened_below_indices = [index for sublist in below_indices for index in sublist]
-
+    rule2_above_indices, rule2_below_indices = get_rule2_indices(redbead_array, mean_array[0])
     # Extract the values for above and below mean runs
-    above_values = [redbead_array[i] for i in flattened_above_indices]
-    below_values = [redbead_array[i] for i in flattened_below_indices]
+    above_values = [redbead_array[i] for i in rule2_above_indices]
+    below_values = [redbead_array[i] for i in rule2_below_indices]
 
     # Highlight above mean runs
-    if flattened_above_indices:
-        fig.add_trace(go.Scatter(x=flattened_above_indices, y=above_values, mode='markers', 
+    if rule2_above_indices:
+        fig.add_trace(go.Scatter(x=rule2_above_indices, y=above_values, mode='markers',
                                 marker=dict(color='orange', size=7), name='Rule 2: Above'), row=1, col=1)
 
     # Highlight below mean runs
-    if flattened_below_indices:
-        fig.add_trace(go.Scatter(x=flattened_below_indices, y=below_values, mode='markers', 
+    if rule2_below_indices:
+        fig.add_trace(go.Scatter(x=rule2_below_indices, y=below_values, mode='markers', 
                                 marker=dict(color='orange', size=7), name='Rule 2: Below'), row=1, col=1)
 
 # NEW! 
@@ -423,6 +452,8 @@ def draw_highlight_box(fig, upl_array, lpl_array, highlight_points, fill_color, 
         opacity=0.7,
         row=1, col=1
     )
+
+    fig.update_layout()
 
 # NEW! 
 def plot_distribution(redbead_array, args):
@@ -502,6 +533,20 @@ def calculate_degrees_of_freedom(num_points):
     """Calculate the degrees of freedom for a given number of data points."""
     return 1 / np.sqrt(2 * num_points)
 
+#NEW!
+def get_rule1_indices(redbead_array, upl, lpl):
+    """Find Rule 1 signals in an array of red bead values."""
+    rule1_above_indices = []
+    rule1_below_indices = []
+
+    for i, value in enumerate(redbead_array):
+        if value > upl:
+            rule1_above_indices.append(i)
+        elif value < lpl:
+            rule1_below_indices.append(i)
+
+    return rule1_above_indices, rule1_below_indices
+
 # NEW!
 def get_rule2_indices(redbead_array, mean_value, min_run_length=8):
     """Find Rule 2 signals in an array of red bead values."""
@@ -509,33 +554,37 @@ def get_rule2_indices(redbead_array, mean_value, min_run_length=8):
         if len(rule2_signal_run) >= min_run_length:
             rule2_signal_run_list.append(rule2_signal_run)
     
-    above_runs_indices = []
-    below_runs_indices = []
+    rule2_above_indices = []
+    rule2_below_indices = []
     current_above_run = []
     current_below_run = []
     
     for i, value in enumerate(redbead_array):
         if value > mean_value:
             if current_below_run:
-                append_rule2_indices(current_below_run, below_runs_indices)
+                append_rule2_indices(current_below_run, rule2_below_indices)
                 current_below_run = []
             current_above_run.append(i)
         else:
             if current_above_run:
-                append_rule2_indices(current_above_run, above_runs_indices)
+                append_rule2_indices(current_above_run, rule2_above_indices)
                 current_above_run = []
             current_below_run.append(i)
 
     # Check for last run, if any
-    append_rule2_indices(current_above_run, above_runs_indices)
-    append_rule2_indices(current_below_run, below_runs_indices)
+    append_rule2_indices(current_above_run, rule2_above_indices)
+    append_rule2_indices(current_below_run, rule2_below_indices)
+
+    # Flatten nested lists
+    flattened_above_indices = [index for sublist in rule2_above_indices for index in sublist]
+    flattened_below_indices = [index for sublist in rule2_below_indices for index in sublist]
     
-    return above_runs_indices, below_runs_indices
+    return flattened_above_indices, flattened_below_indices
 
 # NEW!
 def get_chart_header(args, redbead_array, mean_array, upl_array, lpl_array, chart_title_text=""):
     """Generate the chart header text."""
-    baseline_sample_period = len(redbead_array) if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
+    baseline_sample_count = len(redbead_array) if args.baselineSamplePeriod == BASELINE_PERIOD_ALL else args.baselineSamplePeriod
     chart_title = (
         f"<span style='font-weight:bold'>{chart_title_text}</span><br>"
         f"<span style='font-size:12px'>"
@@ -543,7 +592,7 @@ def get_chart_header(args, redbead_array, mean_array, upl_array, lpl_array, char
         f"<b>Paddle Size: </b>{args.paddleLotSize} "
         f"<b>Data Points:</b> {len(redbead_array)} "
         f"<b>Method: </b>{SAMPLE_METHOD} "
-        f"<b>Baseline Sample Period: </b>{baseline_sample_period} "
+        f"<b>Baseline Sample Period: </b>{baseline_sample_count} "
         f"<b>Total Red Beads: </b>{sum(redbead_array)} "
         f"<br><b>Mean:</b> {mean_array[0]} "
         f"<b>UPL:</b> {upl_array[0]} "
