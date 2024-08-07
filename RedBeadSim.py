@@ -253,9 +253,9 @@ def get_limits_array(redbead_array, mean, limit_type, sigma_units, args):
         raise ValueError("Sigma units must be between 1 and 3 for calculating process limits.")
 
     if limit_type == UPPER_PROC_LIMIT:
-        proc_limit = round(mean + sigma_units * mR_BAR / 1.128, 1)
+        proc_limit = round(mean + sigma_units * mR_BAR / 1.128, 2)
     else:
-        proc_limit = round(mean - sigma_units * mR_BAR / 1.128, 1)
+        proc_limit = round(mean - sigma_units * mR_BAR / 1.128, 2)
         proc_limit = max(proc_limit, 0)  # Ensure proc_limit is not negative
     
     return [proc_limit] * len(redbead_array)
