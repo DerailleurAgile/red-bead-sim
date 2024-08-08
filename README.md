@@ -117,7 +117,7 @@ Use the ````--exportToExcel```` option to capture simulation results in an Excel
 
 **NEW!** Red bead cells are now highlighted to show Rule 1 (red) and Rule 2 (orange) signals.
 
-![Red Beads Distribution Histogram](images/redbead_sim_excel_export.png)
+![Red Beads Distribution Histogram](images/readbead_sim_excel_highlights.png)
 
 ## Installation
 
