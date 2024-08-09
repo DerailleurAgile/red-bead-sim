@@ -36,7 +36,7 @@ from openpyxl.styles import PatternFill
 # and 3200 White to 800 Red, as described in The New Economics
 RED_BEADS_IN_BUCKET = 800
 WHITE_BEADS_IN_BUCKET = 3200
-BEAD_BUCKET_ARRAY = [0] * (RED_BEADS_IN_BUCKET + WHITE_BEADS_IN_BUCKET)
+BEAD_BUCKET_ARRAY = []
 
 # Define simple flags to identify the type of bead in the bucket or paddle
 RED_BEAD = 1
@@ -75,8 +75,8 @@ def main():
         total_red_beads = 0
         cum_avg_total = 0 
         sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
-
-        initialize_bead_bucket(BEAD_BUCKET_ARRAY)
+        initialize_experiment(args)
+        
         for _ in range(0,args.cumulativeAvgCycles):
             redbead_array, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.paddleLotSize, args.customSampleMethod)
 
@@ -93,6 +93,14 @@ def main():
         else:
             plot_results(redbead_array,args)
 
+def initialize_experiment(args):
+    global BEAD_BUCKET_ARRAY
+    global WHITE_BEADS_IN_BUCKET
+    global RED_BEADS_IN_BUCKET
+    WHITE_BEADS_IN_BUCKET, RED_BEADS_IN_BUCKET = args.beads
+    BEAD_BUCKET_ARRAY = [0] * (RED_BEADS_IN_BUCKET + WHITE_BEADS_IN_BUCKET)
+    initialize_bead_bucket(BEAD_BUCKET_ARRAY)
+
 # As you'd expect...
 def parse_arguments():
     """Parse command line arguments."""
@@ -106,6 +114,7 @@ def parse_arguments():
     parser.add_argument('--showDegreesOfFreedom', action="store_true", help='Show a plot of the degrees of freedom (uncertainty) for calculating limits. (default: False')
     parser.add_argument('--exportToExcel', action="store_true", help="Export simulation data to an Excel worksheet. (default: False)")
     parser.add_argument('--showSigmaUnitHighlights', type=int, default=0, help="Show transparent sigma unit highlight boxes. (1,2,3)")
+    parser.add_argument('--beads', nargs=2, type=int, default=[3200,800], help='Count of white beads and red beads in bucket. (default: 3200 800')
     return parser.parse_args()
 
 # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
@@ -458,12 +467,12 @@ def draw_highlight_box(fig, upl_array, lpl_array, highlight_points, fill_color, 
 # NEW! 
 def plot_distribution(redbead_array, args):
     """Plot the distribution of red beads as a histogram"""
-    fig = px.histogram(redbead_array, nbins=22, title='Red Bead Distribution')
+    fig = px.histogram(redbead_array, nbins=22, title='Red Bead Experiment Distribution Chart')
     
     # Yes, there is a more elegant way to do this...
     mean_array = get_mean_array(redbead_array, args.baselineSamplePeriod)
-    upl_array = get_limits_array(redbead_array, UPPER_PROC_LIMIT, 3, args)
-    lpl_array = get_limits_array(redbead_array, LOWER_PROC_LIMIT, 3, args)
+    upl_array = get_limits_array(redbead_array, mean_array[0], UPPER_PROC_LIMIT, 3, args)
+    lpl_array = get_limits_array(redbead_array, mean_array[0], LOWER_PROC_LIMIT, 3, args)
 
     # Add vertical lines for mean, UPL, and LPL
     fig.add_shape(
