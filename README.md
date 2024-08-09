@@ -8,11 +8,11 @@ In _Out of the Crisis (1986)_, Dr. Deming debriefs readers on the results of a t
 
 >**Cumulated average.** Question : As 20 per cent of the beads in the box are red, what do you think would be the cumulated average, the statistical limit, as we continue to produce lots by the same process over many days?
 > 
->The answer that comes forth spontaneously from the audience is that it must be 10 because 10 is 20 per cent of 50, the size of a lot. Wrong. 
+>The answer that comes forth spontaneously from the audience is that it must be 10 because 10 is 20 per cent of 50, the size of a lot. **_Wrong_**. 
 >
->We have no basis for such a statement. As a matter of fact, the cumulated average for paddle No. 2 over many experiments in the past has settled down to 9.4 red beads per lot of 50. Paddle No. 1, used for 30 years, shows an average of 11.3. 
+>**We have no basis for such a statement.** As a matter of fact, the cumulated average for paddle No. 2 over many experiments in the past has settled down to 9.4 red beads per lot of 50. Paddle No. 1, used for 30 years, shows an average of 11.3. 
 >
->The paddle is an important piece of information about the process. Would the reader have thought so prior to these figures?
+>_The paddle is an important piece of information about the process. Would the reader have thought so prior to these figures?_
 >
 >_Deming, W. Edwards. Out of the Crisis (MIT Press) (pp. 351-352). The MIT Press. Kindle Edition._
 
