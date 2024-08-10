@@ -211,11 +211,17 @@ def percent_red_beads_in_range(arr, min, max):
 
     return percent_red
 
-# UPDATED!
+# NEW! UPDATED! SLIM! SVELTE!
 def export_to_excel(redbead_array, mean_array, mR_array, upl_array, lpl_array, mr_upl_array):
     """Export the simulation data to an Excel worksheet."""
-    moving_range_array = [None] + mR_array
+    df_combined = create_export_dataframe(redbead_array, mean_array, mR_array, upl_array, lpl_array, mr_upl_array)
+    export_filename = save_export_dataframe_to_excel(df_combined)
+    highlight_rules_in_worksheet(export_filename, redbead_array, upl_array, lpl_array, mean_array)
 
+# NEW! Refactored from old export_to_excel method
+def create_export_dataframe(redbead_array, mean_array, mR_array, upl_array, lpl_array, mr_upl_array):
+    """Create a DataFrame for exporting simulation results contained in multiple arrays"""
+    moving_range_array = [None] + mR_array # offset by one in the spreadsheet
     df_combined = pd.DataFrame({
         'red beads': redbead_array,
         'avg': mean_array,
@@ -224,43 +230,47 @@ def export_to_excel(redbead_array, mean_array, mR_array, upl_array, lpl_array, m
         'lpl': lpl_array,
         'mR-upl': mr_upl_array
     })
+    return df_combined
 
+# NEW! Refactored from old export_to_excel method
+def save_export_dataframe_to_excel(df_combined):
+    """Save the DataFrame to an Excel file."""
     time_stamp = datetime.now().strftime("%Y%m%d%H%M%S")
     export_filename = "redbeadsim-" + time_stamp + ".xlsx"
     df_combined.to_excel(export_filename, index=False)
-    export_filename = os.getcwd() + "/" + export_filename
-    print(f"Simulation data exported to: {export_filename}")
+    export_path = os.path.join(os.getcwd(), export_filename)
+    print(f"Simulation data exported to: {export_path}")
+    return export_path
 
-    # Highlight Rule 1 & 2 data points if they exist
+#NEW! Separated this out of the old export_to_excel method for easier maintenance
+def highlight_rules_in_worksheet(export_filename, redbead_array, upl_array, lpl_array, mean_array):
+    """Apply Rule 1 and Rule 2 highlights to the worksheet if applicable."""
     rule1_above_indices, rule1_below_indices = get_rule1_indices(redbead_array, upl_array[0], lpl_array[0])
     rule2_above_indices, rule2_below_indices = get_rule2_indices(redbead_array, mean_array[0])
-    
-    if rule1_above_indices or rule1_below_indices or rule2_above_indices or rule2_below_indices:
-        workbook = load_workbook(export_filename)
-        worksheet = workbook.active
 
-        if rule2_above_indices:
-            highlight_worksheet_cells(worksheet, rule2_above_indices, LIGHT_ORANGE_FILL, 1)
-        
-        if rule2_below_indices:
-            highlight_worksheet_cells(worksheet, rule2_below_indices, LIGHT_ORANGE_FILL, 1)
-        
-        if rule1_above_indices:
-            highlight_worksheet_cells(worksheet, rule1_above_indices, LIGHT_RED_FILL, 1)
-        
-        if rule1_below_indices:
-            highlight_worksheet_cells(worksheet, rule1_below_indices, LIGHT_RED_FILL, 1)
+    if not (rule1_above_indices or rule1_below_indices or rule2_above_indices or rule2_below_indices):
+        return
 
-        print(f"Worksheet includes Rule 1 or Rule 2 highlights.")
-        workbook.save(export_filename)
+    workbook = load_workbook(export_filename)
+    worksheet = workbook.active
+
+    highlight_worksheet_cells(worksheet, rule2_above_indices, LIGHT_ORANGE_FILL, 1)
+    highlight_worksheet_cells(worksheet, rule2_below_indices, LIGHT_ORANGE_FILL, 1)
+    highlight_worksheet_cells(worksheet, rule1_above_indices, LIGHT_RED_FILL, 1)
+    highlight_worksheet_cells(worksheet, rule1_below_indices, LIGHT_RED_FILL, 1)
+
+    print("Worksheet includes Rule 1 or Rule 2 highlights.")
+    workbook.save(export_filename)
+
 
 # NEW! In an effort to follow DRY principles...
 def highlight_worksheet_cells(worksheet, indices, cell_color, column):
     """Helper method to highlight cells in the worksheet."""
-    fill = PatternFill(start_color=cell_color, end_color=cell_color, fill_type="solid")
-    for row_idx in indices:
-        cell = worksheet.cell(row=row_idx + 2, column=column)  # +2 to skip header and 1-based indexing
-        cell.fill = fill
+    if indices:
+        fill = PatternFill(start_color=cell_color, end_color=cell_color, fill_type="solid")
+        for row_idx in indices:
+            cell = worksheet.cell(row=row_idx + 2, column=column)  # +2 to skip header and 1-based indexing
+            cell.fill = fill
 
 # Return an array containing the upper and lower process limits as repeating
 # values for plotting on a chart
