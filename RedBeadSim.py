@@ -69,14 +69,24 @@ def main():
 
     if args.showDegreesOfFreedom:
         plot_degrees_of_freedom(100)
+    elif args.loadFromExcel:
+        df = pd.read_excel(args.loadFromExcel, sheet_name="Sheet1", engine="openpyxl")
+        redbead_array = df['red beads'].to_numpy()
+        
+        print(f"Data loaded from: {args.loadFromExcel}")
+        print(redbead_array)
+
+        #Hooray for separating concerns well enough that this just works...
+        plot_results(redbead_array, args)
+
     else:
         redbead_array = []
         cum_avg_log = []
         total_red_beads = 0
         cum_avg_total = 0 
         sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
-        initialize_experiment(args)
         
+        initialize_experiment(args)
         for _ in range(0,args.cumulativeAvgCycles):
             redbead_array, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.paddleLotSize, args.customSampleMethod)
 
@@ -115,6 +125,7 @@ def parse_arguments():
     parser.add_argument('--exportToExcel', action="store_true", help="Export simulation data to an Excel worksheet. (default: False)")
     parser.add_argument('--showSigmaUnitHighlights', type=int, default=0, help="Show transparent sigma unit highlight boxes. (1,2,3)")
     parser.add_argument('--beads', nargs=2, type=int, default=[3200,800], help='Count of white beads and red beads in bucket. (default: 3200 800')
+    parser.add_argument('--loadFromExcel', type=str, default="", help="Load data to plot")
     return parser.parse_args()
 
 # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
