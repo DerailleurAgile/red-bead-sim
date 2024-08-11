@@ -17,6 +17,7 @@
 #--showDistribution: Flag to show red beads in another browser tab as a distribution histogram with process limits 
 #--exportToExcel: Flag to export results to an Excel workbook in the execution folder
 #--showDegreesOfFreedom: Flag to show graph of uncertainty in limits
+#--loadFromExcel <str>: Load a previously-saved experiment Excel file
 
 import argparse
 import os
@@ -57,52 +58,75 @@ RED_BEAD_EXPERIMENT_LOTS = 24
 # Flag to indicate calculating limits against the entire set of data points
 BASELINE_PERIOD_ALL = -1
 
+# Data points for the Degrees of Freedom plot - this is based on the one that Dr. Wheeler
+# illustrates in his book, Twenty Things You Need to Know
+DEGREES_OF_FREEDOM = 100
+
 LABEL_ALIGN_CENTRE = "centre"
 LABEL_ALIGN_RIGHT = "right"
 LIGHT_GREEN_FILL = "90EE90"
 LIGHT_ORANGE_FILL = "FFA07A"
 LIGHT_RED_FILL = "FFCCCC"
 
+# NEW! REFACTORED!
+# Addresses a long-standing grievance I've had with how I wrote the original main() method
 def main():
-    """Main function to run the Red Bead Experiment simulation."""
+    """Where the proverbial rubber hits the proverbial road."""
     args = parse_arguments()
 
     if args.showDegreesOfFreedom:
         plot_degrees_of_freedom(100)
     elif args.loadFromExcel:
-        df = pd.read_excel(args.loadFromExcel, sheet_name="Sheet1", engine="openpyxl")
-        redbead_array = df['red beads'].to_numpy()
-        
-        print(f"Data loaded from: {args.loadFromExcel}")
-        print(redbead_array)
-
-        #Hooray for separating concerns well enough that this just works...
-        plot_results(redbead_array, args)
-
+        load_from_excel(args)
     else:
-        redbead_array = []
-        cum_avg_log = []
-        total_red_beads = 0
-        cum_avg_total = 0 
-        sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
-        
-        initialize_experiment(args)
-        for _ in range(0,args.cumulativeAvgCycles):
-            redbead_array, total_red_beads = run_experiment_cycle(BEAD_BUCKET_ARRAY, sample_count, args.paddleLotSize, args.customSampleMethod)
+        run_simulation(args)
 
-            # Calculate cumulative average for the "day"    
-            cum_avg_log.append(round(np.mean(redbead_array[:args.baselineSamplePeriod]),2))
-            cum_avg_total = cum_avg_total + (total_red_beads / sample_count)
-            total_red_beads = 0
-        
-        print_results(args, cum_avg_log, cum_avg_total, sample_count)
-        
-        if args.showDistribution:
-            plot_results(redbead_array, args)
-            plot_distribution(redbead_array, args)
-        else:
-            plot_results(redbead_array,args)
+# NEW! REFACTORED! 
+def load_from_excel(args):
+    """Loading saved experiment data from an Excel file and plot the results."""
+    df = pd.read_excel(args.loadFromExcel, sheet_name="Sheet1", engine="openpyxl")
+    redbead_array = df['red beads'].to_numpy()
+    
+    print(f"Data loaded from: {args.loadFromExcel}")
+    print(redbead_array)
 
+    plot_results(redbead_array, args)
+
+# NEW! REFACTORED! 
+def run_simulation(args):
+    """Run the Red Bead Experiment simulation."""
+    redbead_array = []
+    cum_avg_log = []
+    cum_avg_total = 0
+    sample_count = args.experimentCycles * RED_BEAD_EXPERIMENT_LOTS
+
+    initialize_experiment(args)
+
+    for _ in range(args.cumulativeAvgCycles):
+        redbead_array, total_red_beads = run_experiment_cycle(
+            BEAD_BUCKET_ARRAY, sample_count, args.paddleLotSize, args.customSampleMethod
+        )
+
+        log_cumulative_averages(redbead_array, cum_avg_log, cum_avg_total, total_red_beads, args, sample_count)
+
+    print_results(args, cum_avg_log, cum_avg_total, sample_count)
+    plot_simulation_results(redbead_array, args)
+
+# NEW! REFACTORED! 
+def log_cumulative_averages(redbead_array, cum_avg_log, cum_avg_total, total_red_beads, args, sample_count):
+    """Calculate and log cumulative averages."""
+    baseline_average = np.mean(redbead_array[:args.baselineSamplePeriod])
+    cum_avg_log.append(round(baseline_average, 2))
+    cum_avg_total += (total_red_beads / sample_count)
+
+# NEW! REFACTORED! 
+def plot_simulation_results(redbead_array, args):
+    """Plot the results and distribution of the simulation."""
+    plot_results(redbead_array, args)
+    if args.showDistribution: # Why here? To pair it with the XmR.
+        plot_distribution(redbead_array, args)
+
+# NEW! REFACTORED!
 def initialize_experiment(args):
     global BEAD_BUCKET_ARRAY
     global WHITE_BEADS_IN_BUCKET
@@ -125,7 +149,7 @@ def parse_arguments():
     parser.add_argument('--exportToExcel', action="store_true", help="Export simulation data to an Excel worksheet. (default: False)")
     parser.add_argument('--showSigmaUnitHighlights', type=int, default=0, help="Show transparent sigma unit highlight boxes. (1,2,3)")
     parser.add_argument('--beads', nargs=2, type=int, default=[3200,800], help='Count of white beads and red beads in bucket. (default: 3200 800')
-    parser.add_argument('--loadFromExcel', type=str, default="", help="Load data to plot")
+    parser.add_argument('--loadFromExcel', type=str, default="", help="Load previously-saved experiment Excel file to plot.")
     return parser.parse_args()
 
 # In Out of the Crisis, Deming contends that the only way to have truly random samples drawn from
