@@ -85,6 +85,10 @@ For deeper-dives into understanding the **Red Bead Experiment** and how **Proces
 
 ## New Features
 
+### Load from Excel
+
+Previously-saved experiment data can now be loaded using the ````--loadFromExcel```` option while preserving the ability to layer-in changing the options for visual aids like the Baseline Sample Period and Sigma Unit bands. The data can be in any Excel file as long as it is in the first column in "Sheet 1" under the header "red beads".
+
 ### Display Total Red Beads
 
 The chart header now includes a total count of red beads drawn across the entire run of simulated experiments.
@@ -162,6 +166,7 @@ python ReadBeadSim.py [OPTIONS]
 - **`--showSigmaUnitHighlights <int>`**: Show visual aids for 1, 2, or 3 sigma units of dispersion around the mean; defaults to 0
 - **`--showDistribution`**: Flag to show red beads in another browser tab as a distribution histogram with process limits 
 - **`--exportToExcel`**: Flag to export results to an Excel workbook in the execution folder
+- **`--loadFromExcel <str>`**: Load a previously-exported Red Bead Experiment Excel file
 - **`--showDegreesOfFreedom`**: Flag to show graph of uncertainty in limits
 
 ### Example
