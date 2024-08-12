@@ -178,8 +178,8 @@ python ReadBeadSim.py [OPTIONS]
 ### Example
 ````
 python RedBeadSim.py --experimentCycles 15 --baselineSamplePeriod 96 --paddleLotSize 25
-python ReadBeadSim.py --exportToExcel
-python ReadBeadSim.py --loadFromExcel redbeadsim-redbeadsim-20240808234004.xlsx --showSigmaUnitHighlights 2
+python RedBeadSim.py --exportToExcel
+python RedBeadSim.py --loadFromExcel redbeadsim-redbeadsim-20240808234004.xlsx --showSigmaUnitHighlights 2
 ````
 
 ## License
