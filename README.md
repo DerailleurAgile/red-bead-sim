@@ -61,7 +61,7 @@ Here are some sample charts the simulation can generate: the first is what I cal
 
 ### Rolling Baseline Period
 
-This was created using the ````--loadFromExcel```` option to re-plot previously-saved results and changing the ````--baselineSamplePeriod```` over several iterations. Note how the Rule 2 signals disappear and re-appear as the sample changes.
+This was created using the ````--loadFromExcel```` option to re-plot previously-saved results and changing the ````--baselineSamplePeriod```` over several iterations. Note how the Rule 2 signals disappear and re-appear as the sample changes. Also observe how the data points captured in the 1σ and 2σ bands solidify beyond the first 24 points and remain un-changed as the baseline sample period extends to the entire range.
 
 ![Example Output](images/RedBeadSim-Rolling-Basline-Period.gif)
 
