@@ -59,6 +59,12 @@ Here are some sample charts the simulation can generate: the first is what I cal
 ![Example Output](images/redbeadsim_standard_baseline_all.png)
 ![Example Output](images/redbeadsim_standard_baseline_96.png)
 
+### Rolling Baseline Period
+
+This was created using the ````--loadFromExcel```` option to re-plot previously-saved results and changing the ````--baselineSamplePeriod```` over several iterations. Note how the Rule 2 signals disappear and re-appear as the sample changes.
+
+![Example Output](images/RedBeadSim-Rolling-Basline-Period.gif)
+
 ## Observations
 
 As Dr. Deming postulated, drawing of lots using random numbers does yield a cumulative average of 10 red beads. For comparison, pictured below is a capture of 360 hand-sampled lots using a [3-D printed paddle](https://www.thingiverse.com/thing:3991096) modeled after the same one Deming used in his demonstrations of the Red Bead Experiment. Note the cumulative average of 9.69
